@@ -16,25 +16,6 @@ def create_players(players, starting_chips):
     return player_list
 
 
-def get_blind_position(button, players_length, sb=True):
-    return button + 1 if sb else 2 % players_length
-    # if players_length == 2:
-    #     if sb:
-    #         return button
-    #     else:
-    #         return 1 if button == 0 else 0
-    # elif sb and button + 1 == players_length:
-    #     return 0
-    # elif sb:
-    #     return button + 1
-    # elif button + 2 == players_length:
-    #     return 0
-    # elif button + 1 == players_length:
-    #     return 1
-    # else:
-    #     return button + 2
-
-
 class Badugi:
     """
     docstring for Badugi.
@@ -56,6 +37,7 @@ class Badugi:
         self.bb = self.BIG_BLIND
         self.sb = self.BIG_BLIND / 2
         self.hands_played = 0
+        self.dealer = Dealer(self.players, self.button, self.bb)
 
     def deal_hand(self):
         """
@@ -70,51 +52,56 @@ class Badugi:
             - move button
         :returns: Amount of chips of each player.
         """
-        dealer = Dealer(self.players, self.button, self.bb)
-        dealer.shuffle_deck()
+        # Dealer
+        self.dealer = Dealer(self.players, self.button, self.bb)
+        self.dealer.shuffle_deck()
 
-        print("self.button:", self.button)
         # Blinds
-        # sb = get_blind_position(self.button, len(self.players), sb=True)
-        # bb = get_blind_position(self.button, len(self.players), sb=False)
-        sb = (self.button + 1) % len(self.players)
-        print("sb:", sb)
-        bb = (self.button + 2) % len(self.players)
-        print("bb:", bb)
-        self.players[sb].post_sb(dealer)
-        self.players[bb].post_bb(dealer)
+        sb_index = (self.button + 1) % len(self.players)
+        bb_index = (self.button + 2) % len(self.players)
+        self.players[sb_index].post_sb(self.dealer)
+        self.players[bb_index].post_bb(self.dealer)
 
         # Deal cards
         for player in self.players:
             player_hand = []
-            for i in range(4):
-                player_hand.append(dealer.deck.pop())
+            for i in range(4):  # type: ignore
+                player_hand.append(self.dealer.deck.pop())
             player.hand = player_hand
             player.hand.sort(key=lambda x: x["number"])
 
         # Betting rounds
+        clock = pygame.time.Clock()
         run = True
         while run:
-            for player in self.players:
-                if "1" in player.name:
-                    player.bet(dealer)
-                else:
-                    player.call(dealer)
-            if not any([player.acted for player in self.players]):
+            print("ruu")
+            clock.tick(1)
+            all_player_acted = all([player.acted for player in self.players])
+            if all_player_acted:
+                print("ALL ACTED")
                 run = False
-            run = False
 
         # Find winner
-        dealer.collect()
+        self.dealer.collect()
         winners = get_winners(self.players)
 
         # Award pot
-        dealer.award(winners)
-        self.button = self.button + 1 % len(self.players)
+        self.dealer.award(winners)
+        self.button = (self.button + 1) % len(self.players)
         self.hands_played += 1
 
     def move_button(self):
         self.button = 0 if self.button == len(self.players) - 1 else self.button + 1
+
+    def _draw_dealer(self):
+        just_text = f"POT: {self.dealer.pot} Turn: {self.players[0].name}  To call: {self.dealer.to_call}"
+        # print("just_text:", just_text)
+        pot_text = self.SCORE_FONT.render(
+            f"{just_text}",
+            True,
+            self.WHITE,
+        )
+        self.window.blit(pot_text, (20, 250))
 
     def _draw_player(self):
         for i, player in enumerate(self.players):
@@ -130,27 +117,11 @@ class Badugi:
             self.window.blit(plr_score_text, (20, (i + 1) * 50))
             self.window.blit(plr_hand_text, (425, (i + 1) * 50))
 
-    # def _draw_divider(self):
-    #     for i in range(10, self.window_height, self.window_height//20):
-    #         if i % 2 == 1:
-    #             continue
-    #         pygame.draw.rect(
-    #             self.window, self.WHITE, (self.window_width//2 - 5, i, 10, self.window_height//20))
-
     def draw(self):
         self.window.fill(self.BLACK)
 
-        # self._draw_divider()
-
         self._draw_player()
-
-        # if draw_hits:
-        #     self._draw_hits()
-
-        # for paddle in [self.left_paddle, self.right_paddle]:
-        #     paddle.draw(self.window)
-
-        # self.ball.draw(self.window)
+        self._draw_dealer()
 
 
 if __name__ == "__main__":
@@ -160,6 +131,7 @@ if __name__ == "__main__":
     badugi = Badugi(window, width, height, players, 20000)
     clock = pygame.time.Clock()
 
+    badugi.deal_hand()
     run = True
     while run:
         clock.tick(1)
@@ -168,10 +140,45 @@ if __name__ == "__main__":
                 run = False
                 break
         badugi.draw()
-        badugi.deal_hand()
-        badugi.draw()
         pygame.display.update()
-        if badugi.hands_played > 9:
+        turn = badugi.dealer.turn
+        keys = pygame.key.get_pressed()
+        print("ALAkerta")
+        if keys[pygame.K_LEFT]:
+            print("FOLD")
+            badugi.players[turn].fold(badugi.dealer)
+        elif keys[pygame.K_DOWN]:
+            print("CALL")
+            badugi.players[turn].call(badugi.dealer)
+        elif keys[pygame.K_RIGHT]:
+            print("RAISE")
+            badugi.players[turn].bet(badugi.dealer)
+        elif keys[pygame.K_UP]:
+            print("INFO")
+            print("turn:", turn)
+            print(
+                "DEALER:",
+                "badugi.dealer.pot",
+                badugi.dealer.pot,
+                "badugi.dealer.stage",
+                badugi.dealer.stage,
+                "badugi.dealer.button",
+                badugi.dealer.button,
+                "badugi.dealer.turn",
+                badugi.dealer.turn,
+                "badugi.dealer.to_call",
+                badugi.dealer.to_call,
+            )
+            for player in badugi.players:
+                print(
+                    player.name,
+                    player.chips,
+                    player.chips_in_front,
+                    player.acted,
+                    player.folded,
+                )
+
+        if badugi.hands_played > 3:
             run = False
         if not run:
             break

@@ -16,7 +16,7 @@ class Dealer:
         self.cap = 4
         self.to_cap = self.cap
         self.button = button
-        self.turn = button + 2 % len(players)
+        self.turn = (button + 2) % len(players)
         self.to_call = bb
 
     def collect(self):
@@ -28,22 +28,25 @@ class Dealer:
         for winner in winners:
             winner.move_chips(self.pot / len(winners))
         self.pot = 0
+        self.stage = 0
+        for player in self.players:
+            player.reset()
 
     def shuffle_deck(self):
         shuffle(self.deck)
 
-    def fold(self, chips_in_front):
-        self.pot += chips_in_front
-        self.turn += 1
+    # def fold(self, chips_in_front):
+    #     self.pot += chips_in_front
+    #     self.turn = (self.turn + 1) % len(self.players)
 
-    def call(self):
-        self.turn += 1
+    # def call(self):
+    #     self.turn = (self.turn + 1) % len(self.players)
 
     def bet(self, bettor):
         for player in self.players:
             if player.name != bettor.name and not player.folded:
                 player.acted = True
-        self.turn += 1
+        self.turn = (self.turn + 1) % len(self.players)
 
 
 def create_deck():

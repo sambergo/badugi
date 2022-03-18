@@ -11,16 +11,24 @@ class Player:
         self.acted = False
         self.folded = False
 
+    def reset(self):
+        self.hand = []
+        self.chips_in_front = 0
+        self.acted = False
+        self.folded = False
+
     def move_chips(self, amount):
         self.chips += amount
 
     def post_sb(self, dealer):
         self.chips_in_front = dealer.sb
+        self.chips -= dealer.sb
         dealer.pot += dealer.sb
         print("posted sb:", self.name)
 
     def post_bb(self, dealer):
         self.chips_in_front = dealer.sb
+        self.chips -= dealer.bb
         dealer.pot += dealer.bb
         print("posted bb:", self.name)
 
@@ -29,7 +37,7 @@ class Player:
         self.chips_in_front = 0
         self.acted = True
         self.folded = True
-        dealer.turn += 1
+        dealer.turn = (dealer.turn + 1) % len(dealer.players)
         print(self.name, " folded.")
 
     def call(self, dealer):
@@ -38,7 +46,7 @@ class Player:
         self.chips -= to_call
         self.acted = True
         dealer.pot += to_call
-        dealer.turn += 1
+        dealer.turn = (dealer.turn + 1) % len(dealer.players)
         print(self.name, " call:", self.chips_in_front)
 
     def bet(self, dealer):
