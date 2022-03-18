@@ -10,6 +10,7 @@ class Deck:
         self.cards = create_deck()
 
     def shuffle_deck(self):
+        self.cards = create_deck()
         shuffle(self.cards)
 
 

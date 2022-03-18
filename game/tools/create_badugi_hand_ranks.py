@@ -34,4 +34,4 @@ for i, hand in enumerate(hands):
 print(handobj)
 
 
-open("hands.json", "w").write(json.dumps(handobj))
+open("./tools/hands.json", "w").write(json.dumps(handobj))
