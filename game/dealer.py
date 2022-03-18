@@ -6,10 +6,18 @@ class Dealer:
     docstring for Dealer.
     """
 
-    def __init__(self, players):
+    def __init__(self, players, button, bb):
         self.players = players
-        self.pot = 0
         self.deck = create_deck()
+        self.bb = bb
+        self.sb = bb / 2
+        self.pot = 0
+        self.stage = 0
+        self.cap = 4
+        self.to_cap = self.cap
+        self.button = button
+        self.turn = button + 2 % len(players)
+        self.to_call = bb
 
     def collect(self):
         for player in self.players:
@@ -23,6 +31,19 @@ class Dealer:
 
     def shuffle_deck(self):
         shuffle(self.deck)
+
+    def fold(self, chips_in_front):
+        self.pot += chips_in_front
+        self.turn += 1
+
+    def call(self):
+        self.turn += 1
+
+    def bet(self, bettor):
+        for player in self.players:
+            if player.name != bettor.name and not player.folded:
+                player.acted = True
+        self.turn += 1
 
 
 def create_deck():
