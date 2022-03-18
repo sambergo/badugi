@@ -65,7 +65,6 @@ def get_winner(players):
                     break
             if same_hand:
                 winners.append(player)
-
     return winners
 
 
