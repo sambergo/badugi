@@ -50,11 +50,8 @@ class Player:
 
     def bet(self, dealer, players):
         to_call = dealer.to_call - self.chips_in_front
-        print("to_call:", to_call)
         bet_size = dealer.bb if dealer.stage < 2 else dealer.bb * 2
-        print("bet_size:", bet_size)
         to_bet = to_call + bet_size
-        print("to_bet:", to_bet)
         self.chips_in_front += to_bet
         self.chips -= to_bet
         dealer.pot += to_bet
@@ -66,23 +63,3 @@ class Player:
                 player.acted = False
         print(self.name, " raise to:", self.chips_in_front, "cost:", dealer.to_call)
         self.acted = True
-
-
-# def act(self, dealer, action, amount):
-#     if action == 0:
-#         dealer.fold(self.chips_in_front)
-#         self.acted = True
-#         self.folded = True
-#         self.chips_in_front = 0
-#         print(self.name, " folded.")
-#     elif action == 1:
-#         dealer.call()
-#         self.chips_in_front += amount
-#         self.chips -= amount
-#         self.acted = True
-#         print(self.name, " call:", self.chips_in_front)
-#     elif action == 2:
-#         dealer.bet(self)
-#         self.chips_in_front += amount
-#         self.chips -= amount
-#         self.acted = True

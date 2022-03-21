@@ -1,4 +1,5 @@
 import json
+from os import error
 
 hand_ranks = json.loads(open("./hands.json").read())
 
@@ -40,9 +41,7 @@ def get_hand_rank(hand):
         if not has_suit and not has_number:
             badugi_hand.append(card)
     k = "-".join(map(str, [x["number"] for x in badugi_hand]))
-    # print(k)
     rank = hand_ranks[k]
-    # print(rank)
     return rank
 
 

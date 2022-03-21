@@ -25,8 +25,9 @@ class Badugi:
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
     BIG_BLIND = 10
+    MAX_HANDS = 3
 
-    def __init__(self, window, width, height, player_names, starting_chips):
+    def __init__(self, window, width, height, player_names, starting_chips, max_hands):
         # def __init__(self, players, starting_chips):
         self.window = window
         self.width = width
@@ -34,12 +35,12 @@ class Badugi:
         self.starting_chips = starting_chips
         self.players = create_players(player_names, starting_chips)
         self.button = randrange(0, len(player_names))
+        self.MAX_HANDS = max_hands
         self.bb = self.BIG_BLIND
         self.sb = self.BIG_BLIND / 2
         self.hands_played = 0
         self.hand_active = False
         self.dealer = Dealer(self.players, self.button, self.bb)
-        print("btn", self.button)
 
     def main_loop(self):
         clock = pygame.time.Clock()
@@ -54,9 +55,12 @@ class Badugi:
             only_one_left = (
                 len([player for player in self.players if not player.folded]) == 1
             )
-            if not self.hand_active:
+            if not self.hand_active and not self.hands_played >= self.MAX_HANDS:
                 print("NEW HAND")
                 self.deal_new_hand()
+            elif self.hands_played >= self.MAX_HANDS:
+                run = False
+                break
             elif self.dealer.all_acted or only_one_left:
                 if self.dealer.stage > 2:
                     self.finish_hand()
@@ -65,11 +69,7 @@ class Badugi:
             elif self.hand_active:
                 self.hand_loop()
             else:
-                print("ELSE")
-                if badugi.hands_played >= 3:
-                    run = False
-                if not run:
-                    break
+                print("ERROR")
             self.draw()
             pygame.display.update()
 
@@ -78,7 +78,6 @@ class Badugi:
     def next_street(self):
         self.dealer.stage += 1
         self.dealer.next_turn(self.players, new_street=True)
-        print(self.dealer.turn)
         self.dealer.to_call = 0
         for player in self.players:
             player.acted = False if not player.folded else True
@@ -118,16 +117,12 @@ class Badugi:
 
     def hand_loop(self):
         # Betting rounds
-        #     print("ALL ACTED")
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
-            print("FOLD")
             self.players[self.dealer.turn].fold(self.dealer, self.players)
         elif keys[pygame.K_DOWN]:
-            print("CALL")
             self.players[self.dealer.turn].call(self.dealer, self.players)
         elif keys[pygame.K_RIGHT]:
-            print("RAISE")
             self.players[self.dealer.turn].bet(self.dealer, self.players)
         elif keys[pygame.K_UP]:
             print("INFO")
@@ -153,6 +148,7 @@ class Badugi:
                     player.acted,
                     player.folded,
                 )
+            print(f"hands played {self.hands_played}")
         only_one_left = (
             len([player for player in self.players if not player.folded]) == 1
         )
@@ -179,7 +175,6 @@ class Badugi:
 
     def _draw_dealer(self):
         just_text = f"POT: {self.dealer.pot} Turn: {self.players[self.dealer.turn].name}  To call: {self.dealer.to_call}"
-        # print("just_text:", just_text)
         pot_text = self.SCORE_FONT.render(
             f"{just_text}",
             True,
@@ -211,8 +206,9 @@ class Badugi:
 if __name__ == "__main__":
     players = ["Player1", "Player2", "Player3"]
     width, height = 700, 500
+    max_hands = 1
     window = pygame.display.set_mode((width, height))
-    badugi = Badugi(window, width, height, players, 20000)
+    badugi = Badugi(window, width, height, players, 20000, max_hands)
     clock = pygame.time.Clock()
 
     badugi.main_loop()
