@@ -8,6 +8,8 @@ def get_winners(players):
     :input: List of players objects
     :return: Filtered list of winner(s)
     """
+    if len(players) == 1:
+        players
     winners = []
     best_rank = 0
     for player in players:
@@ -17,7 +19,7 @@ def get_winners(players):
             best_rank = rank
         elif rank == best_rank:
             winners.append(player)
-    return winners
+    return [player.name for player in winners]
 
 
 def get_hand_rank(hand):
