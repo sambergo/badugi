@@ -51,15 +51,14 @@ class Badugi:
                     run = False
                     break
             # Loop
+            only_one_left = (
+                len([player for player in self.players if not player.folded]) == 1
+            )
             if not self.hand_active:
                 print("NEW HAND")
                 self.deal_new_hand()
-            elif self.dealer.all_acted:
-                if (
-                    self.dealer.stage > 2
-                    or len([player for player in self.players if not player.folded])
-                    == 1
-                ):
+            elif self.dealer.all_acted or only_one_left:
+                if self.dealer.stage > 2:
                     self.finish_hand()
                 else:
                     self.next_street()
@@ -154,8 +153,11 @@ class Badugi:
                     player.acted,
                     player.folded,
                 )
+        only_one_left = (
+            len([player for player in self.players if not player.folded]) == 1
+        )
         all_player_acted = all([player.acted for player in self.players])
-        if all_player_acted:
+        if all_player_acted or only_one_left:
             print("ALL ACTED")
             self.dealer.all_acted = True
 

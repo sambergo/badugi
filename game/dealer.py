@@ -28,20 +28,14 @@ class Dealer:
             self.pot += player.chips_in_front
             player.chips_in_front = 0
 
-    # def award(self, winners, players):
-    #     for winner in winners:
-    #         winner.move_chips(self.pot / len(winners))
-    #     for player in players:
-    #         player.reset()
-
     def shuffle_deck(self):
         shuffle(self.deck)
 
     def get_next_turn_index(self, players, start):
-        end = start + len(players)
-        for i in range(start, end):
-            if not players[i % end].folded:
-                return i
+        pl = len(players)
+        for i in range(start, start + pl):
+            if not players[i % pl].folded:
+                return i % pl
         print("ERROR AT nextturn")
         return 0
 
