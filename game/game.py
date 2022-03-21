@@ -8,14 +8,6 @@ from tools.get_winners import get_winners
 pygame.init()
 
 
-def create_players(player_names, starting_chips):
-    player_list = []
-    for name in player_names:
-        new_player = Player(name, starting_chips)
-        player_list.append(new_player)
-    return player_list
-
-
 class Badugi:
     """
     docstring for Badugi.
@@ -92,6 +84,29 @@ class Badugi:
             self.draw()
             pygame.display.update()
 
+    def hand_loop(self):
+        # Betting rounds
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            self.main_delay = True
+            self.players[self.dealer.turn].fold(self.dealer, self.players)
+        elif keys[pygame.K_DOWN]:
+            self.main_delay = True
+            self.players[self.dealer.turn].call(self.dealer, self.players)
+        elif keys[pygame.K_RIGHT]:
+            self.main_delay = True
+            self.players[self.dealer.turn].bet(self.dealer, self.players)
+        elif keys[pygame.K_UP]:
+            self.main_delay = True
+            self.print_info()
+        only_one_left = (
+            len([player for player in self.players if not player.folded]) == 1
+        )
+        all_player_acted = all([player.acted for player in self.players])
+        if all_player_acted or only_one_left:
+            print("ALL ACTED")
+            self.dealer.all_acted = True
+
     def draw_cards_loop(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_1]:
@@ -113,32 +128,6 @@ class Badugi:
             self.dealer.next_turn(self.players)
         if keys[pygame.K_UP]:
             self.print_info()
-
-    def print_info(self):
-        print("INFO")
-        print("turn:", self.players[self.dealer.turn].name)
-        print(
-            "DEALER:",
-            "self.dealer.pot",
-            self.dealer.pot,
-            "self.dealer.stage",
-            self.dealer.stage,
-            "self.dealer.button",
-            self.dealer.button,
-            "self.dealer.turn",
-            self.dealer.turn,
-            "self.dealer.to_call",
-            self.dealer.to_call,
-        )
-        for player in self.players:
-            print(
-                player.name,
-                player.chips,
-                player.chips_in_front,
-                player.acted,
-                player.folded,
-            )
-        print(f"hands played {self.hands_played}")
 
     def next_street(self):
         self.dealer.stage += 1
@@ -167,13 +156,11 @@ class Badugi:
         self.dealer = Dealer(self.players, self.button, self.bb)
         self.dealer.shuffle_deck()
         self.hand_active = True
-
         # Blinds
         sb_index = (self.button + 1) % len(self.players)
         bb_index = (self.button + 2) % len(self.players)
         self.players[sb_index].post_sb(self.dealer)
         self.players[bb_index].post_bb(self.dealer)
-
         # Deal cards
         for player in self.players:
             player_hand = []
@@ -181,29 +168,6 @@ class Badugi:
                 player_hand.append(self.dealer.deck.pop())
             player.hand = player_hand
             player.hand.sort(key=lambda x: x["number"])
-
-    def hand_loop(self):
-        # Betting rounds
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]:
-            self.main_delay = True
-            self.players[self.dealer.turn].fold(self.dealer, self.players)
-        elif keys[pygame.K_DOWN]:
-            self.main_delay = True
-            self.players[self.dealer.turn].call(self.dealer, self.players)
-        elif keys[pygame.K_RIGHT]:
-            self.main_delay = True
-            self.players[self.dealer.turn].bet(self.dealer, self.players)
-        elif keys[pygame.K_UP]:
-            self.main_delay = True
-            self.print_info()
-        only_one_left = (
-            len([player for player in self.players if not player.folded]) == 1
-        )
-        all_player_acted = all([player.acted for player in self.players])
-        if all_player_acted or only_one_left:
-            print("ALL ACTED")
-            self.dealer.all_acted = True
 
     def finish_hand(self):
         print("FINISH")
@@ -217,6 +181,32 @@ class Badugi:
         self.button = (self.button + 1) % len(self.players)
         self.hands_played += 1
         self.hand_active = False
+
+    def print_info(self):
+        print("INFO")
+        print("turn:", self.players[self.dealer.turn].name)
+        print(
+            "DEALER:",
+            "self.dealer.pot",
+            self.dealer.pot,
+            "self.dealer.stage",
+            self.dealer.stage,
+            "self.dealer.button",
+            self.dealer.button,
+            "self.dealer.turn",
+            self.dealer.turn,
+            "self.dealer.to_call",
+            self.dealer.to_call,
+        )
+        for player in self.players:
+            print(
+                player.name,
+                player.chips,
+                player.chips_in_front,
+                player.acted,
+                player.folded,
+            )
+        print(f"hands played {self.hands_played}")
 
     def move_button(self):
         self.button = 0 if self.button == len(self.players) - 1 else self.button + 1
@@ -250,6 +240,14 @@ class Badugi:
         self.window.fill(self.BLACK)
         self._draw_dealer()
         self._draw_players()
+
+
+def create_players(player_names, starting_chips):
+    player_list = []
+    for name in player_names:
+        new_player = Player(name, starting_chips)
+        player_list.append(new_player)
+    return player_list
 
 
 if __name__ == "__main__":

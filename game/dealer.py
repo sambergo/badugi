@@ -6,7 +6,7 @@ import pygame
 
 class Dealer:
     """
-    docstring for Dealer.
+    New dealer is created for each hand.
     """
 
     def __init__(self, players, button, bb):
@@ -22,24 +22,9 @@ class Dealer:
         self.turn = (button + 3) % len(players)
         self.to_call = bb
         self.all_acted = False
-        print(
-            f"BUTTON: {self.button} btnplr: {players[self.button].name} turn: {self.turn}"
-        )
-
-    def collect(self, players):
-        for player in players:
-            self.pot += player.chips_in_front
-            player.chips_in_front = 0
 
     def shuffle_deck(self):
         shuffle(self.deck)
-
-    def get_next_turn_index(self, players, start):
-        pl = len(players)
-        for i in range(start, start + pl):
-            if not players[i % pl].folded:
-                return i % pl
-        return -1
 
     def next_turn(
         self,
@@ -48,13 +33,21 @@ class Dealer:
     ):
         if new_street:
             start = (self.button + 1) % self.players_length
-            self.turn = self.get_next_turn_index(players, start)
+            self.turn = get_next_turn_index(players, start)
             self.to_call = 0
             for player in players:
                 player.chips_in_front = 0
         else:
             start = (self.turn + 1) % self.players_length
-            self.turn = self.get_next_turn_index(players, start)
+            self.turn = get_next_turn_index(players, start)
+
+
+def get_next_turn_index(players, start):
+    pl = len(players)
+    for i in range(start, start + pl):
+        if not players[i % pl].folded:
+            return i % pl
+    return -1
 
 
 def create_deck():

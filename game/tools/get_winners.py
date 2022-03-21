@@ -1,7 +1,7 @@
 import json
-from os import error
+import os
 
-hand_ranks = json.loads(open("./hands.json").read())
+hand_ranks = json.loads(open(os.path.join("tools", "hands.json")).read())
 
 
 def get_winners(players):
