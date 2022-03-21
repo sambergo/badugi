@@ -7,6 +7,7 @@ class Player:
         self.name = name
         self.chips = chips
         self.hand = []
+        self.draw = True
         self.chips_in_front = 0
         self.acted = False
         self.folded = False
@@ -36,6 +37,7 @@ class Player:
         self.chips_in_front = 0
         self.folded = True
         self.acted = True
+        self.draw = False
         dealer.next_turn(players)
         print(self.name, " folded.")
 
@@ -63,3 +65,15 @@ class Player:
                 player.acted = False
         print(self.name, " raise to:", self.chips_in_front, "cost:", dealer.to_call)
         self.acted = True
+
+    def select_card(self, card):
+        old_bool = self.hand[card]["selected"]
+        self.hand[card]["selected"] = not old_bool
+        print("selected", card)
+
+    def draw_cards(self, dealer):
+        for i, card in enumerate(self.hand):
+            if card["selected"]:
+                self.hand[i] = dealer.deck.pop()
+        self.hand.sort(key=lambda x: x["number"])
+        self.draw = False

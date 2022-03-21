@@ -40,6 +40,7 @@ class Badugi:
         self.sb = self.BIG_BLIND / 2
         self.hands_played = 0
         self.hand_active = False
+        self.main_delay = False
         self.dealer = Dealer(self.players, self.button, self.bb)
 
     def main_loop(self):
@@ -54,7 +55,7 @@ class Badugi:
         clock = pygame.time.Clock()
         run = True
         while run:
-            clock.tick(1)
+            clock.tick(5)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     run = False
@@ -62,6 +63,10 @@ class Badugi:
             only_one_left = (
                 len([player for player in self.players if not player.folded]) == 1
             )
+            if self.main_delay:
+                print("wait")
+                self.main_delay = False
+                pygame.time.wait(1000)
             # Loop
             if not self.hand_active and not self.hands_played >= self.MAX_HANDS:
                 print("NEW HAND")
@@ -70,7 +75,13 @@ class Badugi:
                 run = False
                 break
             elif self.dealer.all_acted or only_one_left:
-                if self.dealer.stage > 2:
+                if (
+                    any([player.draw for player in self.players])
+                    and not only_one_left
+                    and self.dealer.stage < 3
+                ):
+                    self.draw_cards_loop()
+                elif self.dealer.stage > 2:
                     self.finish_hand()
                 else:
                     self.next_street()
@@ -81,14 +92,62 @@ class Badugi:
             self.draw()
             pygame.display.update()
 
-    # def get_next_turn(self):
+    def draw_cards_loop(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_1]:
+            self.main_delay = True
+            self.players[self.dealer.turn].select_card(0)
+        if keys[pygame.K_2]:
+            self.main_delay = True
+            self.players[self.dealer.turn].select_card(1)
+        if keys[pygame.K_3]:
+            self.main_delay = True
+            self.players[self.dealer.turn].select_card(2)
+        if keys[pygame.K_4]:
+            self.main_delay = True
+            self.players[self.dealer.turn].select_card(3)
+        if keys[pygame.K_SPACE]:
+            print("DRAW")
+            self.main_delay = True
+            self.players[self.dealer.turn].draw_cards(self.dealer)
+            self.dealer.next_turn(self.players)
+        if keys[pygame.K_UP]:
+            self.print_info()
+
+    def print_info(self):
+        print("INFO")
+        print("turn:", self.players[self.dealer.turn].name)
+        print(
+            "DEALER:",
+            "self.dealer.pot",
+            self.dealer.pot,
+            "self.dealer.stage",
+            self.dealer.stage,
+            "self.dealer.button",
+            self.dealer.button,
+            "self.dealer.turn",
+            self.dealer.turn,
+            "self.dealer.to_call",
+            self.dealer.to_call,
+        )
+        for player in self.players:
+            print(
+                player.name,
+                player.chips,
+                player.chips_in_front,
+                player.acted,
+                player.folded,
+            )
+        print(f"hands played {self.hands_played}")
 
     def next_street(self):
         self.dealer.stage += 1
         self.dealer.next_turn(self.players, new_street=True)
         self.dealer.to_call = 0
         for player in self.players:
-            player.acted = False if not player.folded else True
+            if not player.folded:
+                player.acted = False
+                player.draw = True
         self.dealer.all_acted = False
 
     def deal_new_hand(self):
@@ -127,36 +186,17 @@ class Badugi:
         # Betting rounds
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
+            self.main_delay = True
             self.players[self.dealer.turn].fold(self.dealer, self.players)
         elif keys[pygame.K_DOWN]:
+            self.main_delay = True
             self.players[self.dealer.turn].call(self.dealer, self.players)
         elif keys[pygame.K_RIGHT]:
+            self.main_delay = True
             self.players[self.dealer.turn].bet(self.dealer, self.players)
         elif keys[pygame.K_UP]:
-            print("INFO")
-            print("turn:", self.players[self.dealer.turn].name)
-            print(
-                "DEALER:",
-                "self.dealer.pot",
-                self.dealer.pot,
-                "self.dealer.stage",
-                self.dealer.stage,
-                "self.dealer.button",
-                self.dealer.button,
-                "self.dealer.turn",
-                self.dealer.turn,
-                "self.dealer.to_call",
-                self.dealer.to_call,
-            )
-            for player in self.players:
-                print(
-                    player.name,
-                    player.chips,
-                    player.chips_in_front,
-                    player.acted,
-                    player.folded,
-                )
-            print(f"hands played {self.hands_played}")
+            self.main_delay = True
+            self.print_info()
         only_one_left = (
             len([player for player in self.players if not player.folded]) == 1
         )
@@ -215,7 +255,7 @@ class Badugi:
 if __name__ == "__main__":
     players = ["Player1", "Player2", "Player3"]
     width, height = 1400, 800
-    max_hands = 1
+    max_hands = 3
     window = pygame.display.set_mode((width, height))
     badugi = Badugi(window, width, height, players, 20000, max_hands)
     clock = pygame.time.Clock()

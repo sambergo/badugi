@@ -41,7 +41,11 @@ class Dealer:
                 return i % pl
         return -1
 
-    def next_turn(self, players, new_street=False):
+    def next_turn(
+        self,
+        players,
+        new_street=False,
+    ):
         if new_street:
             start = (self.button + 1) % self.players_length
             self.turn = self.get_next_turn_index(players, start)
@@ -60,5 +64,5 @@ def create_deck():
         for i in range(1, 14):
             img_src = pygame.image.load(os.path.join("PNG", f"{str(i)}{suit}.png"))
             img = pygame.transform.scale(img_src, (100, 175))
-            deck.append({"suit": suit, "number": i, "replace": False, "img": img})
+            deck.append({"suit": suit, "number": i, "selected": False, "img": img})
     return deck
