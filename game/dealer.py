@@ -1,4 +1,7 @@
+import os
 from random import shuffle
+
+import pygame
 
 
 class Dealer:
@@ -36,8 +39,7 @@ class Dealer:
         for i in range(start, start + pl):
             if not players[i % pl].folded:
                 return i % pl
-        print("ERROR AT nextturn")
-        return 0
+        return -1
 
     def next_turn(self, players, new_street=False):
         if new_street:
@@ -52,9 +54,11 @@ class Dealer:
 
 
 def create_deck():
-    suits = ["c", "d", "h", "s"]
+    suits = ["C", "D", "H", "S"]
     deck = []
     for suit in suits:
         for i in range(1, 14):
-            deck.append({"suit": suit, "number": i, "replace": False})
+            img_src = pygame.image.load(os.path.join("PNG", f"{str(i)}{suit}.png"))
+            img = pygame.transform.scale(img_src, (100, 175))
+            deck.append({"suit": suit, "number": i, "replace": False, "img": img})
     return deck

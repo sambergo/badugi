@@ -8,10 +8,10 @@ from tools.get_winners import get_winners
 pygame.init()
 
 
-def create_players(players, starting_chips):
+def create_players(player_names, starting_chips):
     player_list = []
-    for player in players:
-        new_player = Player(player, starting_chips)
+    for name in player_names:
+        new_player = Player(name, starting_chips)
         player_list.append(new_player)
     return player_list
 
@@ -24,11 +24,11 @@ class Badugi:
     SCORE_FONT = pygame.font.SysFont("comicsans", 50)
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
+    GREEN = (0, 128, 0)
     BIG_BLIND = 10
     MAX_HANDS = 3
 
     def __init__(self, window, width, height, player_names, starting_chips, max_hands):
-        # def __init__(self, players, starting_chips):
         self.window = window
         self.width = width
         self.height = height
@@ -43,6 +43,14 @@ class Badugi:
         self.dealer = Dealer(self.players, self.button, self.bb)
 
     def main_loop(self):
+        """
+        Runs one:
+            - deal_new_hand
+            - finish_hand
+            - next_street
+            - hand_loop
+        and updates drawnings
+        """
         clock = pygame.time.Clock()
         run = True
         while run:
@@ -51,10 +59,10 @@ class Badugi:
                 if event.type == pygame.QUIT:
                     run = False
                     break
-            # Loop
             only_one_left = (
                 len([player for player in self.players if not player.folded]) == 1
             )
+            # Loop
             if not self.hand_active and not self.hands_played >= self.MAX_HANDS:
                 print("NEW HAND")
                 self.deal_new_hand()
@@ -174,38 +182,39 @@ class Badugi:
         self.button = 0 if self.button == len(self.players) - 1 else self.button + 1
 
     def _draw_dealer(self):
-        just_text = f"POT: {self.dealer.pot} Turn: {self.players[self.dealer.turn].name}  To call: {self.dealer.to_call}"
+        just_text = f"POT: {self.dealer.pot} To call: {self.dealer.to_call}"
         pot_text = self.SCORE_FONT.render(
             f"{just_text}",
             True,
             self.WHITE,
         )
-        self.window.blit(pot_text, (20, 250))
+        self.window.blit(pot_text, (20, self.height - 75))
 
-    def _draw_player(self):
+    def _draw_players(self):
         for i, player in enumerate(self.players):
             plr_score_text = self.SCORE_FONT.render(
-                f"{'(D)' if self.button == i else ''}{player.name}: {player.chips}",
+                f"{'(D)' if self.button == i else ''}{player.name}: {player.chips} | {player.chips_in_front}",
                 True,
-                self.WHITE,
+                self.WHITE if self.dealer.turn != i else self.GREEN,
             )
-            hand = " ".join(
-                map(str, [str(x["number"]) + x["suit"] for x in player.hand])
-            )
-            plr_hand_text = self.SCORE_FONT.render(hand, True, self.WHITE)
-            self.window.blit(plr_score_text, (20, (i + 1) * 50))
-            self.window.blit(plr_hand_text, (425, (i + 1) * 50))
+            # hand = " ".join(
+            #     map(str, [str(x["number"]) + x["suit"] for x in player.hand])
+            # )
+            # plr_hand_text = self.SCORE_FONT.render(hand, True, self.WHITE)
+            self.window.blit(plr_score_text, (20, (i + 1) * 100))
+            # self.window.blit(plr_hand_text, (425, (i + 1) * 50))
+            for j, card in enumerate(player.hand, start=1):
+                self.window.blit(card["img"], (400 + (j * 45), (i + 1) * 100))
 
     def draw(self):
         self.window.fill(self.BLACK)
-
-        self._draw_player()
         self._draw_dealer()
+        self._draw_players()
 
 
 if __name__ == "__main__":
     players = ["Player1", "Player2", "Player3"]
-    width, height = 700, 500
+    width, height = 1400, 800
     max_hands = 1
     window = pygame.display.set_mode((width, height))
     badugi = Badugi(window, width, height, players, 20000, max_hands)
