@@ -1,9 +1,10 @@
 from random import randrange
 
 import pygame
-from dealer import Dealer
-from player import Player
-from tools.get_winners import get_winners
+
+from .dealer import Dealer
+from .player import Player
+from .tools.get_winners import get_winners
 
 pygame.init()
 
@@ -32,7 +33,6 @@ class Badugi:
         self.sb = self.BIG_BLIND / 2
         self.hands_played = 0
         self.hand_active = False
-        self.main_delay = False
         self.dealer = Dealer(self.players, self.button, self.bb)
 
     def main_loop(self):
@@ -44,93 +44,80 @@ class Badugi:
             - hand_loop
         and updates drawnings
         """
-        clock = pygame.time.Clock()
-        run = True
-        while run:
-            clock.tick(5)
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    run = False
-                    break
-            only_one_left = (
-                len([player for player in self.players if not player.folded]) == 1
-            )
-            if self.main_delay:
-                print("wait")
-                self.main_delay = False
-                pygame.time.wait(1000)
-            # Loop
-            if not self.hand_active and not self.hands_played >= self.MAX_HANDS:
-                print("NEW HAND")
-                self.deal_new_hand()
-            elif self.hands_played >= self.MAX_HANDS:
-                run = False
-                break
-            elif self.dealer.all_acted or only_one_left:
-                if (
-                    any([player.draw for player in self.players])
-                    and not only_one_left
-                    and self.dealer.stage < 3
-                ):
-                    self.draw_cards_loop()
-                elif self.dealer.stage > 2:
+        # Loop
+        if self.hands_played >= self.MAX_HANDS:
+            return False
+        elif self.hand_active:
+            if self.dealer.stage > 6:
+                self.finish_hand()
+            elif self.dealer.stage % 2 == 0:
+                only_one_left = (
+                    len([player for player in self.players if not player.folded]) == 1
+                )
+                if only_one_left:
                     self.finish_hand()
                 else:
-                    self.next_street()
-            elif self.hand_active:
-                self.hand_loop()
-            else:
-                print("ERROR")
-            self.draw()
-            pygame.display.update()
+                    self.hand_loop()
+            elif self.dealer.stage % 2 == 1:
+                self.draw_cards_loop()
+        else:
+            self.deal_new_hand()
+        return True
 
     def hand_loop(self):
         # Betting rounds
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]:
-            self.main_delay = True
-            self.players[self.dealer.turn].fold(self.dealer, self.players)
-        elif keys[pygame.K_DOWN]:
-            self.main_delay = True
-            self.players[self.dealer.turn].call(self.dealer, self.players)
-        elif keys[pygame.K_RIGHT]:
-            self.main_delay = True
-            self.players[self.dealer.turn].bet(self.dealer, self.players)
-        elif keys[pygame.K_UP]:
-            self.main_delay = True
-            self.print_info()
         only_one_left = (
             len([player for player in self.players if not player.folded]) == 1
         )
-        all_player_acted = all([player.acted for player in self.players])
-        if all_player_acted or only_one_left:
-            print("ALL ACTED")
-            self.dealer.all_acted = True
+        players_to_act = len([player for player in self.players if not player.acted])
+        keys = pygame.key.get_pressed()
+        if only_one_left:
+            self.finish_hand()
+        elif players_to_act == 0:
+            self.next_street()
+            print("hand loop all")
+        elif keys[pygame.K_LEFT]:
+            self.players[self.dealer.turn].fold()
+            if players_to_act != 1:
+                self.dealer.next_turn(self.players, new_street=False)
+        elif keys[pygame.K_DOWN]:
+            self.players[self.dealer.turn].call(self.dealer)
+            if players_to_act != 1:
+                self.dealer.next_turn(self.players, new_street=False)
+        elif keys[pygame.K_RIGHT]:
+            self.players[self.dealer.turn].bet(self.dealer, self.players)
+            self.dealer.next_turn(self.players, new_street=False)
+        elif keys[pygame.K_UP]:
+            self.print_info()
 
     def draw_cards_loop(self):
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_1]:
-            self.main_delay = True
+        turns_left = len([player for player in self.players if player.draw])
+        if turns_left == 0:
+            self.next_street()
+            print("dc loop 0")
+        elif keys[pygame.K_1]:
+            # self.main_delay = True
             self.players[self.dealer.turn].select_card(0)
-        if keys[pygame.K_2]:
-            self.main_delay = True
+        elif keys[pygame.K_2]:
+            # self.main_delay = True
             self.players[self.dealer.turn].select_card(1)
-        if keys[pygame.K_3]:
-            self.main_delay = True
+        elif keys[pygame.K_3]:
+            # self.main_delay = True
             self.players[self.dealer.turn].select_card(2)
-        if keys[pygame.K_4]:
-            self.main_delay = True
+        elif keys[pygame.K_4]:
+            # self.main_delay = True
             self.players[self.dealer.turn].select_card(3)
-        if keys[pygame.K_SPACE]:
-            print("DRAW")
-            self.main_delay = True
+        elif keys[pygame.K_SPACE]:
+            print("DRAW CARDS")
+            # self.main_delay = True
             self.players[self.dealer.turn].draw_cards(self.dealer)
-            self.dealer.next_turn(self.players)
-        if keys[pygame.K_UP]:
+            if turns_left != 1:
+                self.dealer.next_turn(self.players, new_street=False)
+        elif keys[pygame.K_UP]:
             self.print_info()
 
     def next_street(self):
-        self.dealer.stage += 1
         self.dealer.next_turn(self.players, new_street=True)
         self.dealer.to_call = 0
         for player in self.players:

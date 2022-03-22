@@ -33,33 +33,29 @@ class Player:
         dealer.pot += dealer.bb
         print("posted bb:", self.name, dealer.bb)
 
-    def fold(self, dealer, players):
+    def fold(self):
         self.chips_in_front = 0
         self.folded = True
         self.acted = True
         self.draw = False
-        dealer.next_turn(players)
         print(self.name, " folded.")
 
-    def call(self, dealer, players):
+    def call(self, dealer):
         to_call = dealer.to_call - self.chips_in_front
         self.chips_in_front += to_call
         self.chips -= to_call
         dealer.pot += to_call
-        dealer.next_turn(players)
         self.acted = True
         print(self.name, " call:", self.chips_in_front)
 
     def bet(self, dealer, players):
         to_call = dealer.to_call - self.chips_in_front
-        bet_size = dealer.bb if dealer.stage < 2 else dealer.bb * 2
+        bet_size = dealer.bb if dealer.stage < 3 else dealer.bb * 2
         to_bet = to_call + bet_size
         self.chips_in_front += to_bet
         self.chips -= to_bet
         dealer.pot += to_bet
-        # dealer.bet(self)
         dealer.to_call += bet_size
-        dealer.next_turn(players)
         for player in players:
             if player.name != self.name and not player.folded:
                 player.acted = False
