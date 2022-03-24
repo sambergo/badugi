@@ -22,6 +22,7 @@ class Dealer:
         self.turn = (button + 3) % len(players)
         self.to_call = bb
         self.all_acted = False
+        self.vaihtajat = []
 
     def shuffle_deck(self):
         shuffle(self.deck)
@@ -53,11 +54,19 @@ def get_next_turn_index(players, start):
 
 
 def create_deck():
-    suits = ["C", "D", "H", "S"]
-    deck = []
-    for suit in suits:
-        for i in range(1, 14):
-            img_src = pygame.image.load(os.path.join("PNG", f"{str(i)}{suit}.png"))
-            img = pygame.transform.scale(img_src, (100, 175))
-            deck.append({"suit": suit, "number": i, "selected": False, "img": img})
+
+    # suits = ["C", "D", "H", "S"]
+    # deck = []
+    # for suit in suits:
+    #     for i in range(1, 14):
+    #         img_src = pygame.image.load(os.path.join("PNG", f"{str(i)}{suit}.png"))
+    #         img = pygame.transform.scale(img_src, (100, 175))
+    #         deck.append({"suit": suit, "number": i, "selected": False, "img": img})
+
+    deck = [
+        {"suit": suit, "number": number}
+        for suit in ["C", "D", "H", "S"]
+        for number in range(1, 14)
+    ]
+
     return deck

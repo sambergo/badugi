@@ -49,7 +49,7 @@ class Badugi:
         if self.hands_played >= self.MAX_HANDS:
             return False
         elif self.hand_active:
-            if self.dealer.stage > 6:
+            if self.dealer.stage > 2:
                 self.finish_hand()
             elif self.dealer.stage % 2 == 0:
                 only_one_left = (
@@ -63,7 +63,11 @@ class Badugi:
             elif self.dealer.stage % 2 == 1:
                 self.draw_cards_loop()
         else:
-            self.deal_new_hand()
+            if self.hands_played < self.MAX_HANDS:
+                self.deal_new_hand()
+            else:
+                pass
+
         return f"{self.hand_active} {self.hands_played} {self.dealer.turn} {self.dealer.stage} "
 
     def hand_loop(self):
@@ -163,6 +167,7 @@ class Badugi:
         self.players[bb_index].post_bb(self.dealer)
         # Deal cards
         for player in self.players:
+            player.reset()
             player_hand = []
             for i in range(4):  # type: ignore
                 player_hand.append(self.dealer.deck.pop())

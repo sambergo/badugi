@@ -1,4 +1,5 @@
 import os
+import pickle
 
 import neat
 import pygame
@@ -39,11 +40,11 @@ class BadugiAI:
             if not self.game.hand_active:
                 # print("noot")
                 pass
-            elif self.dealer.turn == 0:
+            elif self.dealer.turn == 0 and self.dealer.stage % 2 != 1:
                 self.players[0].draw_number_of_cards(self.dealer, decision1)
                 if turns_left != 1:
                     self.dealer.next_turn(self.players, new_street=False)
-            elif self.dealer.turn == 1:
+            elif self.dealer.turn == 1 and self.dealer.stage % 2 != 1:
                 self.players[1].draw_number_of_cards(self.dealer, decision2)
                 if turns_left != 1:
                     self.dealer.next_turn(self.players, new_street=False)
@@ -67,7 +68,7 @@ class BadugiAI:
 
 def eval_genomes(genomes, config):
     width, height = 1400, 800
-    max_hands = 4
+    max_hands = 100
     window = pygame.display.set_mode((width, height))
 
     for i, (genome_id1, genome1) in enumerate(genomes):
@@ -77,7 +78,9 @@ def eval_genomes(genomes, config):
         genome1.fitness = 0
         for genome_id2, genome2 in genomes[i + 1 :]:
             genome2.fitness = 0 if genome2.fitness == None else genome2.fitness
-            game = BadugiAI(window, width, height, ["ai1", "ai2"], max_hands)
+            game = BadugiAI(
+                window, width, height, [f"ai{genome_id1}", f"ai{genome_id2}"], max_hands
+            )
             game.train_ai(genome1, genome2, config)
 
 
@@ -95,6 +98,8 @@ def run_neat(config):
     )  # Tallentaa checkpointin n-sukupolven jälkeen, ettei tarvi alottaa alusta.
 
     winner = p.run(eval_genomes, 3)
+    with open("best.pickle", "wb") as f:
+        pickle.dump(winner, f)
 
 
 if __name__ == "__main__":

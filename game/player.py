@@ -16,12 +16,15 @@ class Player:
         self.chips_in_front = 0
         self.acted = False
         self.folded = False
+        self.vaihdot = 0
 
     def reset(self):
         self.hand = []
         self.chips_in_front = 0
         self.acted = False
         self.folded = False
+        self.vaihdot = 0
+        self.hand_rank = 1
 
     def move_chips(self, amount):
         self.chips += amount
@@ -68,12 +71,18 @@ class Player:
         self.acted = True
 
     def draw_number_of_cards(self, dealer, n):
+        if self.vaihdot > 3:
+            print("ERROR", self.vaihdot)
+        if len(dealer.deck) < 15:
+            print("ERROR deck", len(dealer.deck), dealer.vaihtajat)
         for i in range(n):
             try:
                 self.hand[3 - i] = dealer.deck.pop()
             except:
-                print(dealer.deck)
+                print("kortit loppu", dealer.deck)
                 raise
+        self.vaihdot += 1
+        dealer.vaihtajat.append(self.name)
         self.hand = sort_badugi_hand(self.hand)
         self.hand_rank = get_hand_rank(self.hand)
         self.draw = False
