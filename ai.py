@@ -8,44 +8,23 @@ from game import Badugi
 # width, height = 1400, 800
 # max_hands = 3
 # window = pygame.display.set_mode((width, height))
+STARTING_CHIPS = 10000
 
 
 class BadugiAI:
     def __init__(self, window, width, height, players, max_hands):
-        self.game = Badugi(window, width, height, players, 20000, max_hands)
+        self.game = Badugi(window, width, height, players, STARTING_CHIPS, max_hands)
         self.players = self.game.players
         self.dealer = self.game.dealer
-
-        # def test_ai(self):
-        #     run = True
-        #     while run:
-        #         clock.tick(3)
-        #         for event in pygame.event.get():
-        #             if event.type == pygame.QUIT:
-        #                 run = False
-        #                 break
-        #         run = badugi.main_loop()
-        #         badugi.draw()
-        #         pygame.display.update()
-        #     for player in badugi.players:
-        #         print(player.name)
-        #         print(player.chips)
-        #     print("LOPPU")
-        #     pygame.quit()
-
-        # players = ["Player1", "Player2", "Player3"]
-        # width, height = 1400, 800
-        # max_hands = 3
-        # window = pygame.display.set_mode((width, height))
-        # badugi = Badugi(window, width, height, players, 20000, max_hands)
-        # clock = pygame.time.Clock()
 
     def train_ai(self, genome1, genome2, config):
         net1 = neat.nn.FeedForwardNetwork.create(genome1, config)
         net2 = neat.nn.FeedForwardNetwork.create(genome2, config)
 
         run = True
+        # clock = pygame.time.Clock()
         while run:
+            # clock.tick(1)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     run = False
@@ -56,34 +35,43 @@ class BadugiAI:
             decision1 = output1.index(max(output1))
             output2 = net2.activate((self.players[1].hand_rank, self.dealer.stage))
             decision2 = output2.index(max(output2))
+            turns_left = len([player for player in self.players if player.draw])
             if not self.game.hand_active:
+                # print("noot")
                 pass
             elif self.dealer.turn == 0:
                 self.players[0].draw_number_of_cards(self.dealer, decision1)
+                if turns_left != 1:
+                    self.dealer.next_turn(self.players, new_street=False)
             elif self.dealer.turn == 1:
                 self.players[1].draw_number_of_cards(self.dealer, decision2)
-            print(output1, output2)
+                if turns_left != 1:
+                    self.dealer.next_turn(self.players, new_street=False)
+            # print(output1, output2)
             game_info = self.game.main_loop()
-            self.game.draw()
-            pygame.display.update()
-            if self.game.hand_active >= 3:
-                print(game_info)
-                # calculate_fitness
+            # print(game_info)
+            # self.game.draw()
+            # pygame.display.update()
+            if self.game.hands_played >= 3:
+                # print(game_info)
+                # print("LOPPPUUUUUUUUUUUUUUU" * 99)
+                self.game.hand_active = False
+                self.calculate_fitness(genome1, genome2, self.game)
                 break
 
-    def calculate_fitness(self, genome1, genome2):
-        pass
+    def calculate_fitness(self, genome1, genome2, game):
+        genome1.fitness += game.players[0].chips - STARTING_CHIPS
+        genome2.fitness += game.players[1].chips - STARTING_CHIPS
+        print("fitness", genome1.fitness, genome2.fitness)
 
 
 def eval_genomes(genomes, config):
     width, height = 1400, 800
-    max_hands = 3
+    max_hands = 4
     window = pygame.display.set_mode((width, height))
 
-    # width, height = 700, 500
-    # window = pygame.display.set_mode((width, height))
-
     for i, (genome_id1, genome1) in enumerate(genomes):
+        print("eval", i)
         if i == len(genomes) - 1:
             break
         genome1.fitness = 0

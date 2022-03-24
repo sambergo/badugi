@@ -1,4 +1,5 @@
 from .tools.get_winners import get_hand_rank
+from .tools.sort_hand import sort_badugi_hand
 
 
 class Player:
@@ -29,20 +30,20 @@ class Player:
         self.chips_in_front = dealer.sb
         self.chips -= dealer.sb
         dealer.pot += dealer.sb
-        print("posted sb:", self.name, dealer.sb)
+        # print("posted sb:", self.name, dealer.sb)
 
     def post_bb(self, dealer):
         self.chips_in_front = dealer.bb
         self.chips -= dealer.bb
         dealer.pot += dealer.bb
-        print("posted bb:", self.name, dealer.bb)
+        # print("posted bb:", self.name, dealer.bb)
 
     def fold(self):
         self.chips_in_front = 0
         self.folded = True
         self.acted = True
         self.draw = False
-        print(self.name, " folded.")
+        # print(self.name, " folded.")
 
     def call(self, dealer):
         to_call = dealer.to_call - self.chips_in_front
@@ -50,7 +51,7 @@ class Player:
         self.chips -= to_call
         dealer.pot += to_call
         self.acted = True
-        print(self.name, " call:", self.chips_in_front)
+        # print(self.name, " call:", self.chips_in_front)
 
     def bet(self, dealer, players):
         to_call = dealer.to_call - self.chips_in_front
@@ -63,22 +64,24 @@ class Player:
         for player in players:
             if player.name != self.name and not player.folded:
                 player.acted = False
-        print(self.name, " raise to:", self.chips_in_front, "cost:", dealer.to_call)
+        # print(self.name, " raise to:", self.chips_in_front, "cost:", dealer.to_call)
         self.acted = True
 
     def draw_number_of_cards(self, dealer, n):
-        # print(self.hand)
         for i in range(n):
-            print(i)
-            self.hand[3 - i] = dealer.deck.pop()
-        self.hand.sort(key=lambda x: x["number"])
+            try:
+                self.hand[3 - i] = dealer.deck.pop()
+            except:
+                print(dealer.deck)
+                raise
+        self.hand = sort_badugi_hand(self.hand)
         self.hand_rank = get_hand_rank(self.hand)
         self.draw = False
 
     def select_card(self, card):
         old_bool = self.hand[card]["selected"]
         self.hand[card]["selected"] = not old_bool
-        print("selected", card)
+        # print("selected", card)
 
     def draw_cards(self, dealer):
         for i, card in enumerate(self.hand):

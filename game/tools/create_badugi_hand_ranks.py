@@ -22,7 +22,7 @@ def create_badugi_hand_ranks():
     )
 
     # print(hands)
-    print(len(hands))
+    # print(len(hands))
 
     handobj = {}
     for i, hand in enumerate(hands):

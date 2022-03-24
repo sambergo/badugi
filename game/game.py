@@ -5,6 +5,7 @@ import pygame
 from .dealer import Dealer
 from .player import Player
 from .tools.get_winners import get_hand_rank, get_winners
+from .tools.sort_hand import sort_badugi_hand
 
 pygame.init()
 
@@ -63,7 +64,7 @@ class Badugi:
                 self.draw_cards_loop()
         else:
             self.deal_new_hand()
-        return True
+        return f"{self.hand_active} {self.hands_played} {self.dealer.turn} {self.dealer.stage} "
 
     def hand_loop(self):
         # Betting rounds
@@ -96,19 +97,30 @@ class Badugi:
         turns_left = len([player for player in self.players if player.draw])
         if turns_left == 0:
             self.next_street()
-            print("dc loop 0")
         elif keys[pygame.K_1]:
             # self.main_delay = True
-            self.players[self.dealer.turn].select_card(0)
+            # self.players[self.dealer.turn].select_card(0)
+            self.players[self.dealer.turn].draw_number_of_cards(self.dealer, 1)
+            if turns_left != 1:
+                self.dealer.next_turn(self.players, new_street=False)
         elif keys[pygame.K_2]:
             # self.main_delay = True
-            self.players[self.dealer.turn].select_card(1)
+            # self.players[self.dealer.turn].select_card(1)
+            self.players[self.dealer.turn].draw_number_of_cards(self.dealer, 2)
+            if turns_left != 1:
+                self.dealer.next_turn(self.players, new_street=False)
         elif keys[pygame.K_3]:
             # self.main_delay = True
-            self.players[self.dealer.turn].select_card(2)
+            # self.players[self.dealer.turn].select_card(2)
+            self.players[self.dealer.turn].draw_number_of_cards(self.dealer, 3)
+            if turns_left != 1:
+                self.dealer.next_turn(self.players, new_street=False)
         elif keys[pygame.K_4]:
             # self.main_delay = True
-            self.players[self.dealer.turn].select_card(3)
+            # self.players[self.dealer.turn].select_card(3)
+            self.players[self.dealer.turn].draw_number_of_cards(self.dealer, 4)
+            if turns_left != 1:
+                self.dealer.next_turn(self.players, new_street=False)
         elif keys[pygame.K_SPACE]:
             print("DRAW CARDS")
             # self.main_delay = True
@@ -154,16 +166,16 @@ class Badugi:
             player_hand = []
             for i in range(4):  # type: ignore
                 player_hand.append(self.dealer.deck.pop())
-            player.hand = player_hand
+            player.hand = sort_badugi_hand(player_hand)
             player.hand.sort(key=lambda x: x["number"])
             player.hand_rank = get_hand_rank(player.hand)
 
     def finish_hand(self):
-        print("FINISH")
+        # print("FINISH")
         winners = get_winners([player for player in self.players if not player.folded])
         for player in self.players:
             if player.name in winners:
-                print(f"WINNER: {player.name} amount_ {self.dealer.pot/len(winners)}")
+                # print(f"WINNER: {player.name} amount_ {self.dealer.pot/len(winners)}")
                 player.chips += self.dealer.pot / len(winners)
             player.reset()
 

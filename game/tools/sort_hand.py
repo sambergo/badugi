@@ -31,10 +31,10 @@ if __name__ == "__main__":
     ]
     random.shuffle(deck)
     hand = [deck[i] for i in range(4)]
-    # hand = [
-    #     {"suit": "c", "number": 7},
-    #     {"suit": "h", "number": 8},
-    #     {"suit": "c", "number": 12},
-    #     {"suit": "s", "number": 6},
-    # ]
+    hand = [
+        {"suit": "c", "number": 1},
+        {"suit": "h", "number": 1},
+        {"suit": "c", "number": 7},
+        {"suit": "s", "number": 8},
+    ]
     print(sort_badugi_hand(hand))

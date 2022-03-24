@@ -36,7 +36,7 @@ class Dealer:
             self.turn = get_next_turn_index(players, start)
             self.to_call = 0
             self.stage += 1
-            print("NEW STREET", self.stage)
+            # print("NEW STREET", self.stage)
             for player in players:
                 player.chips_in_front = 0
         else:
