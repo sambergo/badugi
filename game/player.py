@@ -1,3 +1,6 @@
+from .tools.get_winners import get_hand_rank
+
+
 class Player:
     """
     docstring for Player.
@@ -7,6 +10,7 @@ class Player:
         self.name = name
         self.chips = chips
         self.hand = []
+        self.hand_rank = 1
         self.draw = True
         self.chips_in_front = 0
         self.acted = False
@@ -72,4 +76,5 @@ class Player:
             if card["selected"]:
                 self.hand[i] = dealer.deck.pop()
         self.hand.sort(key=lambda x: x["number"])
+        self.hand_rank = get_hand_rank(self.hand)
         self.draw = False

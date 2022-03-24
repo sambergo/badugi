@@ -4,7 +4,7 @@ import pygame
 
 from .dealer import Dealer
 from .player import Player
-from .tools.get_winners import get_winners
+from .tools.get_winners import get_hand_rank, get_winners
 
 pygame.init()
 
@@ -155,6 +155,7 @@ class Badugi:
                 player_hand.append(self.dealer.deck.pop())
             player.hand = player_hand
             player.hand.sort(key=lambda x: x["number"])
+            player.hand_rank = get_hand_rank(player.hand)
 
     def finish_hand(self):
         print("FINISH")
