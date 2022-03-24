@@ -16,29 +16,29 @@ class BadugiAI:
         self.players = self.game.players
         self.dealer = self.game.dealer
 
-        def test_ai(self):
-            run = True
-            while run:
-                clock.tick(3)
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        run = False
-                        break
-                run = badugi.main_loop()
-                badugi.draw()
-                pygame.display.update()
-            for player in badugi.players:
-                print(player.name)
-                print(player.chips)
-            print("LOPPU")
-            pygame.quit()
+        # def test_ai(self):
+        #     run = True
+        #     while run:
+        #         clock.tick(3)
+        #         for event in pygame.event.get():
+        #             if event.type == pygame.QUIT:
+        #                 run = False
+        #                 break
+        #         run = badugi.main_loop()
+        #         badugi.draw()
+        #         pygame.display.update()
+        #     for player in badugi.players:
+        #         print(player.name)
+        #         print(player.chips)
+        #     print("LOPPU")
+        #     pygame.quit()
 
-        players = ["Player1", "Player2", "Player3"]
-        width, height = 1400, 800
-        max_hands = 3
-        window = pygame.display.set_mode((width, height))
-        badugi = Badugi(window, width, height, players, 20000, max_hands)
-        clock = pygame.time.Clock()
+        # players = ["Player1", "Player2", "Player3"]
+        # width, height = 1400, 800
+        # max_hands = 3
+        # window = pygame.display.set_mode((width, height))
+        # badugi = Badugi(window, width, height, players, 20000, max_hands)
+        # clock = pygame.time.Clock()
 
     def train_ai(self, genome1, genome2, config):
         net1 = neat.nn.FeedForwardNetwork.create(genome1, config)
@@ -56,6 +56,12 @@ class BadugiAI:
             decision1 = output1.index(max(output1))
             output2 = net2.activate((self.players[1].hand_rank, self.dealer.stage))
             decision2 = output2.index(max(output2))
+            if not self.game.hand_active:
+                pass
+            elif self.dealer.turn == 0:
+                self.players[0].draw_number_of_cards(self.dealer, decision1)
+            elif self.dealer.turn == 1:
+                self.players[1].draw_number_of_cards(self.dealer, decision2)
             print(output1, output2)
             game_info = self.game.main_loop()
             self.game.draw()

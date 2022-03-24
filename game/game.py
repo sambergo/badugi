@@ -57,7 +57,8 @@ class Badugi:
                 if only_one_left:
                     self.finish_hand()
                 else:
-                    self.hand_loop()
+                    # self.hand_loop()
+                    self.dealer.next_turn(self.players, new_street=True)  # flip
             elif self.dealer.stage % 2 == 1:
                 self.draw_cards_loop()
         else:

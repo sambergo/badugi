@@ -66,6 +66,15 @@ class Player:
         print(self.name, " raise to:", self.chips_in_front, "cost:", dealer.to_call)
         self.acted = True
 
+    def draw_number_of_cards(self, dealer, n):
+        # print(self.hand)
+        for i in range(n):
+            print(i)
+            self.hand[3 - i] = dealer.deck.pop()
+        self.hand.sort(key=lambda x: x["number"])
+        self.hand_rank = get_hand_rank(self.hand)
+        self.draw = False
+
     def select_card(self, card):
         old_bool = self.hand[card]["selected"]
         self.hand[card]["selected"] = not old_bool
