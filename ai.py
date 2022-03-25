@@ -17,6 +17,7 @@ class BadugiAI:
         self.game = Badugi(window, width, height, players, STARTING_CHIPS, max_hands)
         self.players = self.game.players
         self.dealer = self.game.dealer
+        self.max_hands = max_hands
 
     def train_ai(self, genome1, genome2, config):
         net1 = neat.nn.FeedForwardNetwork.create(genome1, config)
@@ -53,7 +54,7 @@ class BadugiAI:
             # print(game_info)
             # self.game.draw()
             # pygame.display.update()
-            if self.game.hands_played >= 3:
+            if self.game.hands_played >= self.max_hands:
                 # print(game_info)
                 # print("LOPPPUUUUUUUUUUUUUUU" * 99)
                 self.game.hand_active = False
@@ -79,7 +80,11 @@ def eval_genomes(genomes, config):
         for genome_id2, genome2 in genomes[i + 1 :]:
             genome2.fitness = 0 if genome2.fitness == None else genome2.fitness
             game = BadugiAI(
-                window, width, height, [f"ai{genome_id1}", f"ai{genome_id2}"], max_hands
+                window,
+                width,
+                height,
+                [f"AI-{genome_id1}", f"AI-{genome_id2}"],
+                max_hands,
             )
             game.train_ai(genome1, genome2, config)
 

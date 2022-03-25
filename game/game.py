@@ -128,7 +128,7 @@ class Badugi:
         elif keys[pygame.K_SPACE]:
             print("DRAW CARDS")
             # self.main_delay = True
-            self.players[self.dealer.turn].draw_cards(self.dealer)
+            self.players[self.dealer.turn].draw_number_of_cards(self.dealer, 0)
             if turns_left != 1:
                 self.dealer.next_turn(self.players, new_street=False)
         elif keys[pygame.K_UP]:

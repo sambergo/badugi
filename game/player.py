@@ -82,7 +82,8 @@ class Player:
                 print("kortit loppu", dealer.deck)
                 raise
         self.vaihdot += 1
-        dealer.vaihtajat.append(self.name)
+        vaihto = f"Stage: {dealer.stage}, Vaihtaja: {self.name}, N:{n}"
+        dealer.vaihtajat.append(vaihto)
         self.hand = sort_badugi_hand(self.hand)
         self.hand_rank = get_hand_rank(self.hand)
         self.draw = False
