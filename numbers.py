@@ -4,6 +4,7 @@
 
 
 import os
+from random import random, shuffle
 
 import neat
 
@@ -11,15 +12,23 @@ import neat
 xor_inputs = [(0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (1.0, 1.0)]
 xor_outputs = [(0.0,), (1.0,), (1.0,), (0.0,)]
 
+nums1 = [1, 2, 3, 4]
+nums2 = [2, 1, 3, 2]
+
 
 def eval_genomes(genomes, config):
     for genome_id, genome in genomes:
         genome.fitness = 4.0
         net = neat.nn.FeedForwardNetwork.create(genome, config)
-        for xi, xo in zip(xor_inputs, xor_outputs):
-            output = net.activate(xi)
-            valivar = (output[0] - xo[0]) ** 2
-            genome.fitness -= valivar
+        idxs = [i for i in range(4)]
+        shuffle(idxs)
+        # zippi = zip(xor_inputs, xor_outputs)
+        for i in idxs:
+            output = net.activate((nums1[i], nums2[i]))
+            # valivar = (output[0] - xor_outputs[i][0]) ** 2
+            add_one = 1 if output[0] > 0.5 else 0
+            is_even = (nums1[i] + nums2[i] + add_one) % 2 == 0
+            genome.fitness += 0.1 if is_even else -0.1
 
 
 def run(config_file):
@@ -50,12 +59,27 @@ def run(config_file):
     # Show output of the most fit genome against training data.
     print("\nOutput:")
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
-    for xi, xo in zip(xor_inputs, xor_outputs):
-        output = winner_net.activate(xi)
-        print("input {!r}, expected output {!r}, got {!r}".format(xi, xo, output))
 
-    p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-4")
-    p.run(eval_genomes, 10)
+    idxs = [i for i in range(4)]
+    shuffle(idxs)
+    print("idxs:", idxs)
+    # zippi = zip(xor_inputs, xor_outputs)
+    for i in idxs:
+        output = winner_net.activate((nums1[i], nums2[i]))
+        is_even = (nums1[i] + nums2[i]) % 2 == 0
+        print("is_even:", is_even)
+        print(
+            "input {!r}, expected output {!r}, got {!r}".format(
+                (nums1[i], nums2[i]), 0 if is_even else 1, output
+            )
+        )
+
+    # for xi, xo in zip(xor_inputs, xor_outputs):
+    #     output = winner_net.activate(xi)
+    #     print("input {!r}, expected output {!r}, got {!r}".format(xi, xo, output))
+
+    # p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-4")
+    # p.run(eval_genomes, 10)
 
 
 if __name__ == "__main__":
@@ -63,5 +87,5 @@ if __name__ == "__main__":
     # here so that the script will run successfully regardless of the
     # current working directory.
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, "config-feedforward")
+    config_path = os.path.join(local_dir, "config_nums.txt")
     run(config_path)
