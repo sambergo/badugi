@@ -21,32 +21,12 @@ def eval_genomes(genomes, config):
             shuffle(deck)
             hands = [sort_badugi_hand(deck[i : i + 4]) for i in range(0, 10 * 4, 4)]
 
-            # hands = [
-            #     [
-            #         {"suit": "c", "number": 1},
-            #         {"suit": "h", "number": 2},
-            #         {"suit": "d", "number": 3},
-            #         {"suit": "s", "number": 4},
-            #     ],
-            #     [
-            #         {"suit": "d", "number": 9},
-            #         {"suit": "h", "number": 10},
-            #         {"suit": "c", "number": 12},
-            #         {"suit": "c", "number": 13},
-            #     ],
-            #     [
-            #         {"suit": "c", "number": 9},
-            #         {"suit": "d", "number": 10},
-            #         {"suit": "h", "number": 11},
-            #         {"suit": "s", "number": 13},
-            #     ],
-            # ]
-
             for hand in hands:
                 old_rank = get_hand_rank(hand)
                 rank_without_last = get_hand_rank(hand[:3])
                 output = net.activate((old_rank, rank_without_last))
-                if output[0] > 0.5:
+                decision = output.index(max(output))
+                if decision > 0:
                     hand.pop()
                     hand.append(deck.pop())
                     hand = sort_badugi_hand(hand)
@@ -57,16 +37,6 @@ def eval_genomes(genomes, config):
                 else:
                     genome.fitness += x
 
-        # idxs = [i for i in range(4)]
-        # shuffle(idxs)
-        # # zippi = zip(xor_inputs, xor_outputs)
-        # for i in idxs:
-        #     output = net.activate((nums1[i], nums2[i]))
-        #     # valivar = (output[0] - xor_outputs[i][0]) ** 2
-        #     add_one = 1 if output[0] > 0.5 else 0
-        #     is_even = (nums1[i] + nums2[i] + add_one) % 2 == 0
-        #     genome.fitness += 0.1 if is_even else -0.1
-
 
 def run(config):
     p = neat.Population(config)
@@ -76,7 +46,7 @@ def run(config):
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    p.add_reporter(neat.Checkpointer(5))
+    # p.add_reporter(neat.Checkpointer(5))
 
     # Run for up to 300 generations.
     winner = p.run(eval_genomes, 30)
@@ -108,34 +78,18 @@ def run(config):
             {"suit": "s", "number": 13},
         ],
     ]
+
     for hand in hands:
         old_rank = get_hand_rank(hand)
         rank_without_last = get_hand_rank(hand[:3])
         output = winner_net.activate((old_rank, rank_without_last))
+        decision = output.index(max(output))
         print(
-            f"old rank: {old_rank}, without last: {rank_without_last}. vaihdetaanko: {output[0]} "
+            f"old rank: {old_rank}, without last: {rank_without_last}. vaihdetaanko: {decision} "
         )
 
     with open("best.pickle", "wb") as f:
         pickle.dump(winner, f)
-
-    # idxs = [i for i in range(4)]
-    # shuffle(idxs)
-    # print("idxs:", idxs)
-    # # zippi = zip(xor_inputs, xor_outputs)
-    # for i in idxs:
-    #     output = winner_net.activate((nums1[i], nums2[i]))
-    #     is_even = (nums1[i] + nums2[i]) % 2 == 0
-    #     print("is_even:", is_even)
-    #     print(
-    #         "input {!r}, expected output {!r}, got {!r}".format(
-    #             (nums1[i], nums2[i]), 0 if is_even else 1, output
-    #         )
-    #     )
-
-    # for xi, xo in zip(xor_inputs, xor_outputs):
-    #     output = winner_net.activate(xi)
-    #     print("input {!r}, expected output {!r}, got {!r}".format(xi, xo, output))
 
     # p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-4")
     # p.run(eval_genomes, 10)
@@ -177,8 +131,9 @@ def test_ai(config):
         old_rank = get_hand_rank(hand)
         rank_without_last = get_hand_rank(hand[:3])
         output = winner_net.activate((old_rank, rank_without_last))
+        decision = output.index(max(output))
         print(
-            f"old rank: {old_rank}, without last: {rank_without_last}. vaihdetaanko: {output[0]} "
+            f"old rank: {old_rank}, without last: {rank_without_last}. vaihdetaanko: {decision} "
         )
 
 
@@ -192,5 +147,5 @@ if __name__ == "__main__":
         neat.DefaultStagnation,
         config_path,
     )
-    # run(config)
-    test_ai(config)
+    run(config)
+    # test_ai(config)
