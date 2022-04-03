@@ -24,7 +24,7 @@ def get_winners(players):
     return [player.name for player in winners]
 
 
-def get_hand_rank(hand):
+def get_hand_rank(hand) -> int:
     """
     :input example:
     hand = [

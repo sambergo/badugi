@@ -88,7 +88,6 @@ def test_ai(config):
     with open("best.pickle", "rb") as f:
         genome = pickle.load(f)
     net = neat.nn.FeedForwardNetwork.create(genome, config)
-
     deck = [
         {"suit": suit, "number": number}
         for suit in ["C", "D", "H", "S"]
@@ -115,7 +114,6 @@ def test_ai(config):
     # (self.left_paddle.y, self.ball.y, abs(self.left_paddle.x - self.ball.x)))
     decision = output.index(max(output))
     print("decision:", decision)
-
     # output = net.activate(
     #     (self.right_paddle.y, self.ball.y, abs(self.right_paddle.x - self.ball.x)))
     # decision = output.index(max(output))

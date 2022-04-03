@@ -101,7 +101,6 @@ def run_neat(config):
     p.add_reporter(
         neat.Checkpointer(1)
     )  # Tallentaa checkpointin n-sukupolven jälkeen, ettei tarvi alottaa alusta.
-
     winner = p.run(eval_genomes, 3)
     with open("best.pickle", "wb") as f:
         pickle.dump(winner, f)
@@ -110,7 +109,6 @@ def run_neat(config):
 if __name__ == "__main__":
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, "config.txt")
-
     config = neat.Config(
         neat.DefaultGenome,
         neat.DefaultReproduction,
