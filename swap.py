@@ -9,32 +9,34 @@ from game.tools.sort_hand import sort_badugi_hand
 
 
 def eval_genomes(genomes, config):
-    for genome_id, genome in genomes:
+    for _, genome in genomes:
         genome.fitness = 4.0
         net = neat.nn.FeedForwardNetwork.create(genome, config)
-        for i in range(99):
+        for _ in range(99):
             deck = [
                 {"suit": suit, "number": number}
                 for suit in ["c", "d", "h", "s"]
                 for number in range(1, 14)
             ]
             shuffle(deck)
-            hands = [sort_badugi_hand(deck[i : i + 4]) for i in range(0, 10 * 4, 4)]
-
+            # 6 hands
+            hands = [sort_badugi_hand(deck[i : i + 4]) for i in range(0, 6 * 4, 4)]
             for hand in hands:
                 old_rank = get_hand_rank(hand)
                 rank_with_3 = get_hand_rank(hand[:3])
                 rank_with_2 = get_hand_rank(hand[:2])
                 rank_with_1 = get_hand_rank(hand[:1])
                 output = net.activate((old_rank, rank_with_3, rank_with_2, rank_with_1))
-                if output[0] > 0.5:
-                    hand.pop()
-                    hand.append(deck.pop())
+                decision = output.index(max(output))
+                if decision > 0:
+                    hand = hand[: 4 - decision]
+                    for _ in range(decision):
+                        hand.append(deck.pop())
                     hand = sort_badugi_hand(hand)
                 new_rank = get_hand_rank(hand)
                 x = new_rank - old_rank
                 if x < 0:
-                    genome.fitness += x * 10
+                    genome.fitness += x * 2
                 else:
                     genome.fitness += x
 
@@ -59,8 +61,8 @@ def run(config):
         [
             {"suit": "c", "number": 1},
             {"suit": "h", "number": 2},
-            {"suit": "d", "number": 3},
-            {"suit": "s", "number": 4},
+            {"suit": "c", "number": 3},
+            {"suit": "h", "number": 4},
         ],
         [
             {"suit": "d", "number": 9},
@@ -76,13 +78,16 @@ def run(config):
         ],
     ]
 
+    # hands = [sort_badugi_hand(deck[i : i + 4]) for i in range(0, 6 * 4, 4)]
     for hand in hands:
         old_rank = get_hand_rank(hand)
-        rank_without_last = get_hand_rank(hand[:3])
-        output = winner_net.activate((old_rank, rank_without_last))
+        rank_with_3 = get_hand_rank(hand[:3])
+        rank_with_2 = get_hand_rank(hand[:2])
+        rank_with_1 = get_hand_rank(hand[:1])
+        output = winner_net.activate((old_rank, rank_with_3, rank_with_2, rank_with_1))
         decision = output.index(max(output))
         print(
-            f"old rank: {old_rank}, without last: {rank_without_last}. vaihdetaanko: {decision} "
+            f"{','.join([str(c['number'])+c['suit'] for c in hand])} rank: {old_rank} decision: {decision}"
         )
 
     with open("best.pickle", "wb") as f:
@@ -96,41 +101,22 @@ def test_ai(config):
     with open("best.pickle", "rb") as f:
         winner = pickle.load(f)
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
-    # hands = [
-    #     [
-    #         {"suit": "c", "number": 1},
-    #         {"suit": "d", "number": 2},
-    #         {"suit": "h", "number": 3},
-    #         {"suit": "s", "number": 4},
-    #     ],
-    #     [
-    #         {"suit": "d", "number": 9},
-    #         {"suit": "h", "number": 10},
-    #         {"suit": "c", "number": 12},
-    #         {"suit": "c", "number": 13},
-    #     ],
-    #     [
-    #         {"suit": "c", "number": 9},
-    #         {"suit": "d", "number": 10},
-    #         {"suit": "h", "number": 11},
-    #         {"suit": "s", "number": 13},
-    #     ],
-    # ]
     deck = [
         {"suit": suit, "number": number}
         for suit in ["c", "d", "h", "s"]
         for number in range(1, 14)
     ]
     shuffle(deck)
-    hands = [sort_badugi_hand(deck[i : i + 4]) for i in range(0, 10 * 4, 4)]
+    hands = [sort_badugi_hand(deck[i : i + 4]) for i in range(0, 6 * 4, 4)]
     for hand in hands:
-        hand = sort_badugi_hand(hand)
         old_rank = get_hand_rank(hand)
-        rank_without_last = get_hand_rank(hand[:3])
-        output = winner_net.activate((old_rank, rank_without_last))
+        rank_with_3 = get_hand_rank(hand[:3])
+        rank_with_2 = get_hand_rank(hand[:2])
+        rank_with_1 = get_hand_rank(hand[:1])
+        output = winner_net.activate((old_rank, rank_with_3, rank_with_2, rank_with_1))
         decision = output.index(max(output))
         print(
-            f"old rank: {old_rank}, without last: {rank_without_last}. vaihdetaanko: {decision} "
+            f"{','.join([str(c['number'])+c['suit'] for c in hand])} rank: {old_rank} decision: {decision}"
         )
 
 
@@ -144,5 +130,5 @@ if __name__ == "__main__":
         neat.DefaultStagnation,
         config_path,
     )
-    run(config)
-    # test_ai(config)
+    # run(config)
+    test_ai(config)
