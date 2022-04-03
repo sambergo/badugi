@@ -21,31 +21,12 @@ def eval_genomes(genomes, config):
             shuffle(deck)
             hands = [sort_badugi_hand(deck[i : i + 4]) for i in range(0, 10 * 4, 4)]
 
-            # hands = [
-            #     [
-            #         {"suit": "c", "number": 1},
-            #         {"suit": "h", "number": 2},
-            #         {"suit": "d", "number": 3},
-            #         {"suit": "s", "number": 4},
-            #     ],
-            #     [
-            #         {"suit": "d", "number": 9},
-            #         {"suit": "h", "number": 10},
-            #         {"suit": "c", "number": 12},
-            #         {"suit": "c", "number": 13},
-            #     ],
-            #     [
-            #         {"suit": "c", "number": 9},
-            #         {"suit": "d", "number": 10},
-            #         {"suit": "h", "number": 11},
-            #         {"suit": "s", "number": 13},
-            #     ],
-            # ]
-
             for hand in hands:
                 old_rank = get_hand_rank(hand)
-                rank_without_last = get_hand_rank(hand[:3])
-                output = net.activate((old_rank, rank_without_last))
+                rank_with_3 = get_hand_rank(hand[:3])
+                rank_with_2 = get_hand_rank(hand[:2])
+                rank_with_1 = get_hand_rank(hand[:1])
+                output = net.activate((old_rank, rank_with_3, rank_with_2, rank_with_1))
                 if output[0] > 0.5:
                     hand.pop()
                     hand.append(deck.pop())
@@ -57,33 +38,18 @@ def eval_genomes(genomes, config):
                 else:
                     genome.fitness += x
 
-        # idxs = [i for i in range(4)]
-        # shuffle(idxs)
-        # # zippi = zip(xor_inputs, xor_outputs)
-        # for i in idxs:
-        #     output = net.activate((nums1[i], nums2[i]))
-        #     # valivar = (output[0] - xor_outputs[i][0]) ** 2
-        #     add_one = 1 if output[0] > 0.5 else 0
-        #     is_even = (nums1[i] + nums2[i] + add_one) % 2 == 0
-        #     genome.fitness += 0.1 if is_even else -0.1
-
 
 def run(config):
     p = neat.Population(config)
     # p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-7")
-
-    # Add a stdout reporter to show progress in the terminal.
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
     p.add_reporter(neat.Checkpointer(5))
-
     # Run for up to 300 generations.
     winner = p.run(eval_genomes, 30)
-
     # Display the winning genome.
     print("\nBest genome:\n{!s}".format(winner))
-
     # Show output of the most fit genome against training data.
     print("\nOutput:")
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
@@ -108,6 +74,7 @@ def run(config):
             {"suit": "s", "number": 13},
         ],
     ]
+
     for hand in hands:
         old_rank = get_hand_rank(hand)
         rank_without_last = get_hand_rank(hand[:3])
