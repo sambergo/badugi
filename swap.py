@@ -136,7 +136,7 @@ def test_ai(config):
 
 if __name__ == "__main__":
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, "config_single.txt")
+    config_path = os.path.join(local_dir, "config_multi.txt")
     config = neat.Config(
         neat.DefaultGenome,
         neat.DefaultReproduction,
