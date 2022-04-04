@@ -17,7 +17,8 @@ class Dealer:
         self.cap = 4
         self.to_cap = self.cap
         self.button = button
-        self.turn = (button + 3) % len(players)
+        # self.turn = (button + 3) % len(players) if len(players) != 2 else button
+        self.turn = (self.button + 1) % 2
         self.to_call = bb
         self.all_acted = False
         self.vaihtajat = []
@@ -30,17 +31,27 @@ class Dealer:
         players,
         new_street=False,
     ):
+        # HUOM! muutettu kun vaan vaihdellaan kortteja
         if new_street:
-            start = (self.button + 1) % self.players_length
-            self.turn = get_next_turn_index(players, start)
+            self.turn = (self.button + 1) % 2
             self.to_call = 0
             self.stage += 1
-            # print("NEW STREET", self.stage)
             for player in players:
                 player.chips_in_front = 0
         else:
-            start = (self.turn + 1) % self.players_length
-            self.turn = get_next_turn_index(players, start)
+            self.turn = self.button
+
+        # if new_street:
+        #     start = (self.button + 1) % self.players_length
+        #     self.turn = get_next_turn_index(players, start)
+        #     self.to_call = 0
+        #     self.stage += 1
+        #     # print("NEW STREET", self.stage)
+        #     for player in players:
+        #         player.chips_in_front = 0
+        # else:
+        #     start = (self.turn + 1) % self.players_length
+        #     self.turn = get_next_turn_index(players, start)
 
 
 def get_next_turn_index(players, start):

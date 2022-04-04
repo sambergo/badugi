@@ -1,4 +1,7 @@
+from os import POSIX_FADV_SEQUENTIAL
 from random import randrange
+
+import neat
 
 from .dealer import Dealer
 from .player import Player
@@ -20,11 +23,111 @@ class Badugi:
         self.players = create_players(player_names, starting_chips)
         self.button = randrange(0, len(player_names))
         self.MAX_HANDS = max_hands
-        self.bb = self.BIG_BLIND
-        self.sb = self.BIG_BLIND / 2
+        self.bb = float(self.BIG_BLIND)
+        self.sb = float(self.BIG_BLIND / 2)
         self.hands_played = 0
         self.hand_active = False
         self.dealer = Dealer(self.players, self.button, self.bb)
+        self.is_not_training = True
+        self.MAX_STAGES = 3
+
+    def test_ai(self, net):
+        """
+        Test AI
+        """
+        run = True
+        while run:
+            # run = self.main_loop()
+            self.print_info()
+            # Main loop
+            if self.hands_played >= self.MAX_HANDS:
+                run = False
+            elif self.hand_active and self.dealer.stage < self.MAX_STAGES:
+                if self.dealer.turn == 0:
+                    self.make_player_decision(self.players[0])
+                elif self.dealer.turn == 1:
+                    self.make_ai_decision(self.players[1], net)
+                else:
+                    print("ERROR" * 99)
+            elif self.dealer.stage >= self.MAX_STAGES and self.hand_active:
+                self.finish_hand()
+            else:
+                self.deal_new_hand()
+
+    def train_ai(self, genome1, genome2, config):
+        """
+        Train the AI by passing two NEAT neural networks and the NEAt config object.
+        These AI's will play against eachother to determine their fitness.
+        """
+        self.genome1 = genome1
+        self.genome2 = genome2
+        net0 = neat.nn.FeedForwardNetwork.create(genome1, config)
+        net1 = neat.nn.FeedForwardNetwork.create(genome2, config)
+        self.is_not_training = False
+        run = True
+        while run:
+            if self.hands_played >= self.MAX_HANDS:
+                run = False
+            elif self.hand_active and self.dealer.stage < self.MAX_STAGES:
+                if self.dealer.turn == 0:
+                    self.make_ai_decision(self.players[0], net0)
+                elif self.dealer.turn == 1:
+                    self.make_ai_decision(self.players[1], net1)
+                else:
+                    print("ERROR" * 99)
+            elif self.dealer.stage >= self.MAX_STAGES and self.hand_active:
+                self.finish_hand()
+            else:
+                self.deal_new_hand()
+
+            # run = self.main_loop()
+            # # print("run:", run)
+            # if self.hand_active and self.dealer.stage < self.MAX_STAGES:
+            #     if self.dealer.turn == 0:
+            #         self.make_ai_decision(self.players[0], net0)
+            #     elif self.dealer.turn == 1:
+            #         self.make_ai_decision(self.players[1], net1)
+
+        self.calculate_fitness()
+        return False
+
+    def calculate_fitness(self):
+        self.genome1.fitness += self.players[0].chips - self.starting_chips
+        self.genome2.fitness += self.players[1].chips - self.starting_chips
+
+    def make_player_decision(self, player):
+        decision = int(input("Montako vaihdetaan"))
+        # decision = randrange(0, 4)
+        if self.is_not_training:
+            print(f"player {player.name} making decision: {decision} ")
+        player.draw_number_of_cards(self.dealer, decision)
+        turns_left = len([player for player in self.players if player.draw])
+        if turns_left == 0 and self.dealer.stage < self.MAX_STAGES:
+            self.next_street()
+        elif turns_left == 0 and self.dealer.stage >= self.MAX_STAGES:
+            self.finish_hand()
+        else:
+            self.dealer.next_turn(self.players, new_street=False)
+
+    def make_ai_decision(self, player, net):
+        old_rank = get_hand_rank(player.hand)
+        rank_with_3 = get_hand_rank(player.hand[:3])
+        rank_with_2 = get_hand_rank(player.hand[:2])
+        rank_with_1 = get_hand_rank(player.hand[:1])
+        output = net.activate(
+            (self.dealer.stage, old_rank, rank_with_3, rank_with_2, rank_with_1)
+        )
+        decision = output.index(max(output))
+        if self.is_not_training:
+            print(f"player {player.name} making decision: {decision} ")
+        player.draw_number_of_cards(self.dealer, decision)
+        turns_left = len([player for player in self.players if player.draw])
+        if turns_left == 0 and self.dealer.stage < self.MAX_STAGES:
+            self.next_street()
+        elif turns_left == 0 and self.dealer.stage >= self.MAX_STAGES:
+            self.finish_hand()
+        else:
+            self.dealer.next_turn(self.players, new_street=False)
 
     def main_loop(self):
         """
@@ -39,14 +142,16 @@ class Badugi:
         if self.hands_played >= self.MAX_HANDS:
             return False
         elif self.hand_active:
-            self.draw_cards_loop()
+            # self.dealer.next_turn(self.players, new_street=False)
+            pass
+            # print("main loop hand active")
+            # self.draw_cards_loop()
         else:
             if self.hands_played < self.MAX_HANDS:
                 self.deal_new_hand()
             else:
                 pass
-
-        return f"{self.hand_active} {self.hands_played} {self.dealer.turn} {self.dealer.stage} "
+        return f"active: {self.hand_active}, played: {self.hands_played}, turn: {self.dealer.turn}, stage: {self.dealer.stage} "
 
     def draw_cards_loop(self):
         x = input(f"{self.players[self.dealer.turn].name}: Montako vaihdetaan")
@@ -80,6 +185,8 @@ class Badugi:
         :returns: Amount of chips of each player.
         """
         # Dealer
+        if self.is_not_training:
+            print(f"dealing new hand")
         self.dealer = Dealer(self.players, self.button, self.bb)
         self.dealer.shuffle_deck()
         self.hand_active = True
@@ -95,15 +202,18 @@ class Badugi:
             for i in range(4):  # type: ignore
                 player_hand.append(self.dealer.deck.pop())
             player.hand = sort_badugi_hand(player_hand)
-            player.hand.sort(key=lambda x: x["number"])
             player.hand_rank = get_hand_rank(player.hand)
 
     def finish_hand(self):
-        # print("FINISH")
+        if self.is_not_training:
+            print("FINISH")
         winners = get_winners([player for player in self.players if not player.folded])
         for player in self.players:
             if player.name in winners:
-                # print(f"WINNER: {player.name} amount_ {self.dealer.pot/len(winners)}")
+                if self.is_not_training:
+                    print(
+                        f"WINNER: {player.name} amount_ {self.dealer.pot/len(winners)}"
+                    )
                 player.chips += self.dealer.pot / len(winners)
             player.reset()
 
@@ -112,33 +222,26 @@ class Badugi:
         self.hand_active = False
 
     def print_info(self):
-        print("INFO")
-        print("turn:", self.players[self.dealer.turn].name)
         print(
-            "DEALER:",
-            "self.dealer.pot",
-            self.dealer.pot,
-            "self.dealer.stage",
-            self.dealer.stage,
-            "self.dealer.button",
-            self.dealer.button,
-            "self.dealer.turn",
-            self.dealer.turn,
-            "self.dealer.to_call",
-            self.dealer.to_call,
-        )
-        for player in self.players:
-            print(
-                player.name,
-                player.chips,
-                player.chips_in_front,
-                player.acted,
-                player.folded,
-            )
-        print(f"hands played {self.hands_played}")
+            f"""
+            INFO:
+            Hands played: {self.hands_played}
+            Button: {self.dealer.button}
+            Turn: {self.dealer.turn}
+            Pot: {self.dealer.pot}
+            Stage: {self.dealer.stage}
+            {"-"*20}
+            Player stack: {self.players[0].chips}
+            AI stack: {self.players[1].chips}
+            {"-"*20}
+            AI hand:
+            {[str(c["number"])+c["suit"] for c in  self.players[1].hand]}
+            Player hand:
+            {[str(c["number"])+c["suit"] for c in  self.players[0].hand]}
+            {"-"*20}
 
-    def move_button(self):
-        self.button = 0 if self.button == len(self.players) - 1 else self.button + 1
+                """
+        )
 
 
 def create_players(player_names, starting_chips):

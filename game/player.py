@@ -23,6 +23,7 @@ class Player:
         self.chips_in_front = 0
         self.acted = False
         self.folded = False
+        self.draw = True
         self.vaihdot = 0
         self.hand_rank = 1
 
@@ -71,7 +72,7 @@ class Player:
         self.acted = True
 
     def draw_number_of_cards(self, dealer, n):
-        if self.vaihdot > 3:
+        if self.vaihdot > 4:
             print("ERROR", self.vaihdot)
         if len(dealer.deck) < 15:
             print("ERROR deck", len(dealer.deck), dealer.vaihtajat)
