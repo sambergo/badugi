@@ -29,7 +29,7 @@ class Badugi:
         self.hand_active = False
         self.dealer = Dealer(self.players, self.button, self.bb)
         self.is_not_training = True
-        self.MAX_STAGES = 3
+        self.MAX_STAGES = 4
 
     def test_ai(self, net):
         """
@@ -79,17 +79,65 @@ class Badugi:
                 self.finish_hand()
             else:
                 self.deal_new_hand()
-
-            # run = self.main_loop()
-            # # print("run:", run)
-            # if self.hand_active and self.dealer.stage < self.MAX_STAGES:
-            #     if self.dealer.turn == 0:
-            #         self.make_ai_decision(self.players[0], net0)
-            #     elif self.dealer.turn == 1:
-            #         self.make_ai_decision(self.players[1], net1)
-
         self.calculate_fitness()
         return False
+
+    def train_betting(self, genome1, genome2, config, swap_net):
+        """
+        Train the AI by passing two NEAT neural networks and the NEAt config object.
+        These AI's will play against eachother to determine their fitness.
+        """
+        self.genome1 = genome1
+        self.genome2 = genome2
+        net0 = neat.nn.FeedForwardNetwork.create(genome1, config)
+        net1 = neat.nn.FeedForwardNetwork.create(genome2, config)
+        self.is_not_training = False
+        run = True
+        while run:
+            if self.hands_played >= self.MAX_HANDS:
+                run = False
+            elif self.hand_active and self.dealer.stage < self.MAX_STAGES - 1:
+                if self.dealer.turn == 0:
+                    self.make_ai_decision(self.players[0], swap_net)
+                elif self.dealer.turn == 1:
+                    self.make_ai_decision(self.players[1], swap_net)
+                else:
+                    print("ERROR" * 99)
+            elif self.hand_active and self.dealer.stage == self.MAX_STAGES - 1:
+                if self.dealer.turn == 0:
+                    self.make_ai_bet_decision(self.players[0], net0)
+                elif self.dealer.turn == 1:
+                    self.make_ai_bet_decision(self.players[1], net1)
+                else:
+                    print("ERROR" * 99)
+            elif self.dealer.stage >= self.MAX_STAGES and self.hand_active:
+                self.finish_hand()
+            else:
+                self.deal_new_hand()
+        self.calculate_fitness()
+        return False
+
+    def make_ai_bet_decision(self, player, net):
+        hand_rank = get_hand_rank(player.hand)
+        output = net.activate((hand_rank, self.dealer.pot))
+        decision = output.index(max(output))
+        if self.is_not_training:
+            print(f"player {player.name} making decision: {decision} ")
+        if decision == 0:
+            player.fold()
+        elif decision == 1:
+            player.call(self.dealer)
+        elif decision == 2:
+            player.bet(self.dealer, self.players)
+        else:
+            print("TURN ERROR")
+        turns_left = len([player for player in self.players if player.acted])
+        if turns_left == 0 and self.dealer.stage < self.MAX_STAGES:
+            self.next_street()
+        elif turns_left == 0 and self.dealer.stage >= self.MAX_STAGES:
+            self.finish_hand()
+        else:
+            self.dealer.next_turn(self.players, new_street=False)
 
     def calculate_fitness(self):
         self.genome1.fitness += self.players[0].chips - self.starting_chips
