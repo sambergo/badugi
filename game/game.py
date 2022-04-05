@@ -277,8 +277,9 @@ class Badugi:
         self.dealer.shuffle_deck()
         self.hand_active = True
         # Blinds
-        sb_index = (self.button + 1) % len(self.players)
-        bb_index = (self.button + 2) % len(self.players)
+        pl = len(self.players)
+        sb_index = self.button if pl == 2 else (self.button + 1) % pl
+        bb_index = (self.button + 1) % pl if pl == 2 else (self.button + 2) % pl
         self.players[sb_index].post_sb(self.dealer)
         self.players[bb_index].post_bb(self.dealer)
         # Deal cards

@@ -20,7 +20,7 @@ class Dealer:
         self.turn = (
             button if self.players_length == 2 else (button + 3) % self.players_length
         )
-        self.to_call = bb
+        self.to_call = bb if self.players_length != 2 else self.sb
         self.all_acted = False
         self.vaihtajat = []
 
@@ -43,18 +43,6 @@ class Dealer:
         else:
             start = (self.turn + 1) % self.players_length
             self.turn = get_next_turn_index(players, start)
-
-        # if new_street:
-        #     start = (self.button + 1) % self.players_length
-        #     self.turn = get_next_turn_index(players, start)
-        #     self.to_call = 0
-        #     self.stage += 1
-        #     # print("NEW STREET", self.stage)
-        #     for player in players:
-        #         player.chips_in_front = 0
-        # else:
-        #     start = (self.turn + 1) % self.players_length
-        #     self.turn = get_next_turn_index(players, start)
 
 
 def get_next_turn_index(players, start):
