@@ -15,10 +15,11 @@ class Dealer:
         self.stage = 0
         self.players_length = len(players)
         self.cap = 4
-        self.to_cap = self.cap
+        self.street_bets = 1
         self.button = button
-        # self.turn = (button + 3) % len(players) if len(players) != 2 else button
-        self.turn = (self.button + 1) % 2
+        self.turn = (
+            button if self.players_length == 2 else (button + 3) % self.players_length
+        )
         self.to_call = bb
         self.all_acted = False
         self.vaihtajat = []
@@ -31,15 +32,17 @@ class Dealer:
         players,
         new_street=False,
     ):
-        # HUOM! muutettu kun vaan vaihdellaan kortteja
         if new_street:
-            self.turn = (self.button + 1) % 2
+            start = (self.button + 1) % self.players_length
+            self.turn = get_next_turn_index(players, start)
             self.to_call = 0
             self.stage += 1
+            self.street_bets = 0
             for player in players:
                 player.chips_in_front = 0
         else:
-            self.turn = self.button
+            start = (self.turn + 1) % self.players_length
+            self.turn = get_next_turn_index(players, start)
 
         # if new_street:
         #     start = (self.button + 1) % self.players_length

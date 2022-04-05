@@ -33,25 +33,20 @@ def eval_genomes(genomes, config):
             badugi.train_betting(genome1, genome2, config, swap_net)
 
 
-def run(config):
-    p = neat.Population(config)
-    # p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-7")
-    p.add_reporter(neat.StdOutReporter(True))
-    stats = neat.StatisticsReporter()
-    p.add_reporter(stats)
-    # p.add_reporter(neat.Checkpointer(10))
-    max_generations = 40
-    winner = p.run(eval_genomes, max_generations)
-    print("\nBest genome:\n{!s}".format(winner))
-    with open("best.pickle", "wb") as f:
-        pickle.dump(winner, f)
-    # p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-4")
-    # p.run(eval_genomes, 10)
+def test_ai(bet_config, swap_config):
+    with open("best.pickle", "rb") as f:
+        swap_winner = pickle.load(f)
+    ai_swap_net = neat.nn.FeedForwardNetwork.create(swap_winner, swap_config)
+    with open("betting.pickle", "rb") as f:
+        bet_winner = pickle.load(f)
+    ai_bet_net = neat.nn.FeedForwardNetwork.create(bet_winner, bet_config)
+    max_hands = 10
+    badugi = Badugi(["Player", "AI"], 1000, max_hands)
+    badugi.test_ai(ai_bet_net, ai_swap_net)
 
 
-def run_betting(config_betting):
-    # badugi = Badugi(["Player", "AI"], 10000, 10)
-    p = neat.Population(config_betting)
+def run_betting_training(bet_config):
+    p = neat.Population(bet_config)
     # p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-7")
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
@@ -65,18 +60,24 @@ def run_betting(config_betting):
     with open("betting.pickle", "wb") as f:
         pickle.dump(swap_winner, f)
 
-    # badugi.train_betting(winner_net, config_betting)
-
 
 if __name__ == "__main__":
     local_dir = os.path.dirname(__file__)
     config_path_betting = os.path.join(local_dir, "config-bet.txt")
-    config_betting = neat.Config(
+    bet_config = neat.Config(
         neat.DefaultGenome,
         neat.DefaultReproduction,
         neat.DefaultSpeciesSet,
         neat.DefaultStagnation,
         config_path_betting,
     )
-    # run(config)
-    run_betting(config_betting)
+    config_path_swap = os.path.join(local_dir, "config-swap.txt")
+    swap_config = neat.Config(
+        neat.DefaultGenome,
+        neat.DefaultReproduction,
+        neat.DefaultSpeciesSet,
+        neat.DefaultStagnation,
+        config_path_swap,
+    )
+    test_ai(bet_config, swap_config)
+    # run_betting_training(bet_config)

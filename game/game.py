@@ -1,4 +1,3 @@
-from os import POSIX_FADV_SEQUENTIAL
 from random import randrange
 
 import neat
@@ -9,14 +8,12 @@ from .tools.get_winners import get_hand_rank, get_winners
 from .tools.sort_hand import sort_badugi_hand
 
 
-# testiin
 class Badugi:
     """
     docstring for Badugi.
     """
 
     BIG_BLIND = 10
-    MAX_HANDS = 3
 
     def __init__(self, player_names, starting_chips, max_hands):
         self.starting_chips = starting_chips
@@ -29,32 +26,71 @@ class Badugi:
         self.hand_active = False
         self.dealer = Dealer(self.players, self.button, self.bb)
         self.is_not_training = True
-        self.MAX_STAGES = 4
+        self.MAX_STAGES = 7
 
-    def test_ai(self, net):
+    def test_game(self):
+        """
+        Test Game
+        """
+        run = True
+        while run:
+            self.print_info()
+            is_betting_stage = self.dealer.stage % 2 == 0
+            # Main loop
+            if self.hands_played >= self.MAX_HANDS:
+                run = False
+            elif self.hand_active and self.dealer.stage >= self.MAX_STAGES:
+                self.finish_hand()
+            elif self.hand_active and is_betting_stage:  # TODO: Not only HU
+                if self.dealer.turn == 0:
+                    self.make_player_bet(self.players[0])
+                elif self.dealer.turn == 1:
+                    self.make_player_bet(self.players[1])
+                else:
+                    print("ERROR" * 99)
+            elif self.hand_active and not is_betting_stage:
+                if self.dealer.turn == 0:
+                    self.make_player_swap(self.players[0])
+                elif self.dealer.turn == 1:
+                    self.make_player_swap(self.players[1])
+                else:
+                    print("ERROR" * 99)
+            else:
+                self.deal_new_hand()
+        return False
+
+    def test_ai(self, ai_bet_net, ai_swap_net):
         """
         Test AI
         """
         run = True
         while run:
-            # run = self.main_loop()
             self.print_info()
+            is_betting_stage = self.dealer.stage % 2 == 0
             # Main loop
             if self.hands_played >= self.MAX_HANDS:
                 run = False
-            elif self.hand_active and self.dealer.stage < self.MAX_STAGES:
+            elif self.hand_active and self.dealer.stage >= self.MAX_STAGES:
+                self.finish_hand()
+            elif self.hand_active and is_betting_stage:  # TODO: Not only HU
                 if self.dealer.turn == 0:
-                    self.make_player_decision(self.players[0])
+                    self.make_player_bet(self.players[0])
                 elif self.dealer.turn == 1:
-                    self.make_ai_decision(self.players[1], net)
+                    self.make_ai_bet_decision(self.players[1], ai_bet_net)
                 else:
                     print("ERROR" * 99)
-            elif self.dealer.stage >= self.MAX_STAGES and self.hand_active:
-                self.finish_hand()
+            elif self.hand_active and not is_betting_stage:
+                if self.dealer.turn == 0:
+                    self.make_player_swap(self.players[0])
+                elif self.dealer.turn == 1:
+                    self.make_ai_swap_decision(self.players[1], ai_swap_net)
+                else:
+                    print("ERROR" * 99)
             else:
                 self.deal_new_hand()
+        return False
 
-    def train_ai(self, genome1, genome2, config):
+    def train_swap(self, genome1, genome2, config):
         """
         Train the AI by passing two NEAT neural networks and the NEAt config object.
         These AI's will play against eachother to determine their fitness.
@@ -70,9 +106,9 @@ class Badugi:
                 run = False
             elif self.hand_active and self.dealer.stage < self.MAX_STAGES:
                 if self.dealer.turn == 0:
-                    self.make_ai_decision(self.players[0], net0)
+                    self.make_ai_swap_decision(self.players[0], net0)
                 elif self.dealer.turn == 1:
-                    self.make_ai_decision(self.players[1], net1)
+                    self.make_ai_swap_decision(self.players[1], net1)
                 else:
                     print("ERROR" * 99)
             elif self.dealer.stage >= self.MAX_STAGES and self.hand_active:
@@ -94,24 +130,25 @@ class Badugi:
         self.is_not_training = False
         run = True
         while run:
+            is_betting_stage = self.dealer.stage % 2 == 0
             if self.hands_played >= self.MAX_HANDS:
                 run = False
-            elif self.hand_active and self.dealer.stage < self.MAX_STAGES - 1:
-                if self.dealer.turn == 0:
-                    self.make_ai_decision(self.players[0], swap_net)
-                elif self.dealer.turn == 1:
-                    self.make_ai_decision(self.players[1], swap_net)
-                else:
-                    print("ERROR" * 99)
-            elif self.hand_active and self.dealer.stage == self.MAX_STAGES - 1:
+            elif self.hand_active and self.dealer.stage >= self.MAX_STAGES:
+                self.finish_hand()
+            elif self.hand_active and is_betting_stage:  # TODO: Not only HU
                 if self.dealer.turn == 0:
                     self.make_ai_bet_decision(self.players[0], net0)
                 elif self.dealer.turn == 1:
                     self.make_ai_bet_decision(self.players[1], net1)
                 else:
                     print("ERROR" * 99)
-            elif self.dealer.stage >= self.MAX_STAGES and self.hand_active:
-                self.finish_hand()
+            elif self.hand_active and not is_betting_stage:
+                if self.dealer.turn == 0:
+                    self.make_ai_swap_decision(self.players[0], swap_net)
+                elif self.dealer.turn == 1:
+                    self.make_ai_swap_decision(self.players[1], swap_net)
+                else:
+                    print("ERROR" * 99)
             else:
                 self.deal_new_hand()
         self.calculate_fitness()
@@ -119,10 +156,12 @@ class Badugi:
 
     def make_ai_bet_decision(self, player, net):
         hand_rank = get_hand_rank(player.hand)
-        output = net.activate((hand_rank, self.dealer.pot))
+        output = net.activate(
+            (hand_rank, self.dealer.stage, self.dealer.pot, player.chips_in_front)
+        )
         decision = output.index(max(output))
         if self.is_not_training:
-            print(f"player {player.name} making decision: {decision} ")
+            print(f"player {player.name} making bet decision: {decision} ")
         if decision == 0:
             player.fold()
         elif decision == 1:
@@ -131,33 +170,9 @@ class Badugi:
             player.bet(self.dealer, self.players)
         else:
             print("TURN ERROR")
-        turns_left = len([player for player in self.players if player.acted])
-        if turns_left == 0 and self.dealer.stage < self.MAX_STAGES:
-            self.next_street()
-        elif turns_left == 0 and self.dealer.stage >= self.MAX_STAGES:
-            self.finish_hand()
-        else:
-            self.dealer.next_turn(self.players, new_street=False)
+        self.update_street()
 
-    def calculate_fitness(self):
-        self.genome1.fitness += self.players[0].chips - self.starting_chips
-        self.genome2.fitness += self.players[1].chips - self.starting_chips
-
-    def make_player_decision(self, player):
-        decision = int(input("Montako vaihdetaan"))
-        # decision = randrange(0, 4)
-        if self.is_not_training:
-            print(f"player {player.name} making decision: {decision} ")
-        player.draw_number_of_cards(self.dealer, decision)
-        turns_left = len([player for player in self.players if player.draw])
-        if turns_left == 0 and self.dealer.stage < self.MAX_STAGES:
-            self.next_street()
-        elif turns_left == 0 and self.dealer.stage >= self.MAX_STAGES:
-            self.finish_hand()
-        else:
-            self.dealer.next_turn(self.players, new_street=False)
-
-    def make_ai_decision(self, player, net):
+    def make_ai_swap_decision(self, player, net):
         old_rank = get_hand_rank(player.hand)
         rank_with_3 = get_hand_rank(player.hand[:3])
         rank_with_2 = get_hand_rank(player.hand[:2])
@@ -167,13 +182,45 @@ class Badugi:
         )
         decision = output.index(max(output))
         if self.is_not_training:
-            print(f"player {player.name} making decision: {decision} ")
+            print(f"player {player.name} swaps cards: {decision} ")
         player.draw_number_of_cards(self.dealer, decision)
-        turns_left = len([player for player in self.players if player.draw])
-        if turns_left == 0 and self.dealer.stage < self.MAX_STAGES:
-            self.next_street()
-        elif turns_left == 0 and self.dealer.stage >= self.MAX_STAGES:
+        self.update_street()
+
+    def calculate_fitness(self):
+        self.genome1.fitness += self.players[0].chips - self.starting_chips
+        self.genome2.fitness += self.players[1].chips - self.starting_chips
+
+    def make_player_bet(self, player):
+        decision = int(input("1. Fold, 2. Check/call, 3. Raise"))
+        # decision = randrange(1, 4)
+        is_not_capped = self.dealer.street_bets < self.dealer.cap
+        if self.is_not_training:
+            print(f"player {player.name} bet decision: {decision} ")
+        if decision == 1:
+            player.fold()
+        if decision == 3 and is_not_capped:
+            player.bet(self.dealer, self.players)
+        else:
+            player.call(self.dealer)
+        self.update_street()
+
+    def make_player_swap(self, player):
+        decision = int(input("Montako vaihdetaan"))
+        # decision = randrange(0, 4)
+        if self.is_not_training:
+            print(f"player {player.name} swap decision: {decision} ")
+        player.draw_number_of_cards(self.dealer, decision)
+        self.update_street()
+
+    def update_street(self):
+        is_swap = self.dealer.stage % 2 == 1
+        all_acted = all([p.acted for p in self.players])
+        no_turns_left = all([p.swapped for p in self.players]) if is_swap else all_acted
+        no_showdown = len([p for p in self.players if not p.folded]) == 1
+        if no_turns_left and self.dealer.stage >= self.MAX_STAGES or no_showdown:
             self.finish_hand()
+        elif no_turns_left and self.dealer.stage < self.MAX_STAGES or all_acted:
+            self.next_street()
         else:
             self.dealer.next_turn(self.players, new_street=False)
 
@@ -201,22 +248,13 @@ class Badugi:
                 pass
         return f"active: {self.hand_active}, played: {self.hands_played}, turn: {self.dealer.turn}, stage: {self.dealer.stage} "
 
-    def draw_cards_loop(self):
-        x = input(f"{self.players[self.dealer.turn].name}: Montako vaihdetaan")
-        self.players[self.dealer.turn].draw_number_of_cards(self.dealer, int(x))
-        turns_left = len([player for player in self.players if player.draw])
-        if turns_left == 0:
-            self.next_street()
-        # if turns_left != 1:
-        self.dealer.next_turn(self.players, new_street=False)
-
     def next_street(self):
         self.dealer.next_turn(self.players, new_street=True)
         self.dealer.to_call = 0
         for player in self.players:
             if not player.folded:
                 player.acted = False
-                player.draw = True
+                player.swapped = False
         self.dealer.all_acted = False
 
     def deal_new_hand(self):
@@ -247,7 +285,7 @@ class Badugi:
         for player in self.players:
             player.reset()
             player_hand = []
-            for i in range(4):  # type: ignore
+            for _ in range(4):
                 player_hand.append(self.dealer.deck.pop())
             player.hand = sort_badugi_hand(player_hand)
             player.hand_rank = get_hand_rank(player.hand)

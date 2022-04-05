@@ -12,10 +12,10 @@ class Player:
         self.chips = chips
         self.hand = []
         self.hand_rank = 1
-        self.draw = True
         self.chips_in_front = 0
-        self.acted = False
         self.folded = False
+        self.acted = False
+        self.swapped = False
         self.vaihdot = 0
 
     def reset(self):
@@ -23,7 +23,7 @@ class Player:
         self.chips_in_front = 0
         self.acted = False
         self.folded = False
-        self.draw = True
+        self.swapped = False
         self.vaihdot = 0
         self.hand_rank = 1
 
@@ -46,10 +46,10 @@ class Player:
         self.chips_in_front = 0
         self.folded = True
         self.acted = True
-        self.draw = False
+        self.swapped = True
         print(self.name, " folded.")
 
-    def call(self, dealer):
+    def call(self, dealer):  # check/call
         to_call = dealer.to_call - self.chips_in_front
         self.chips_in_front += to_call
         self.chips -= to_call
@@ -65,6 +65,7 @@ class Player:
         self.chips -= to_bet
         dealer.pot += to_bet
         dealer.to_call += bet_size
+        dealer.street_bets += 1
         for player in players:
             if player.name != self.name and not player.folded:
                 player.acted = False
@@ -87,17 +88,9 @@ class Player:
         dealer.vaihtajat.append(vaihto)
         self.hand = sort_badugi_hand(self.hand)
         self.hand_rank = get_hand_rank(self.hand)
-        self.draw = False
+        self.swapped = True
 
     def select_card(self, card):
         old_bool = self.hand[card]["selected"]
         self.hand[card]["selected"] = not old_bool
         # print("selected", card)
-
-    def draw_cards(self, dealer):
-        for i, card in enumerate(self.hand):
-            if card["selected"]:
-                self.hand[i] = dealer.deck.pop()
-        self.hand.sort(key=lambda x: x["number"])
-        self.hand_rank = get_hand_rank(self.hand)
-        self.draw = False
