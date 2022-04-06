@@ -1,11 +1,14 @@
 from random import randrange
 
 import neat
+import pygame
 
 from .dealer import Dealer
 from .player import Player
 from .tools.get_winners import get_hand_rank, get_winners
 from .tools.sort_hand import sort_badugi_hand
+
+pygame.init()
 
 
 class Badugi:
@@ -13,9 +16,18 @@ class Badugi:
     docstring for Badugi.
     """
 
+    BIG_FONT = pygame.font.SysFont("comicsans", 50)
+    FONT = pygame.font.SysFont("comicsans", 22)
+    WHITE = (255, 255, 255)
+    BLACK = (0, 0, 0)
+    GREEN = (0, 128, 0)
     BIG_BLIND = 10
+    BG = pygame.image.load("./PNG/table.png")
 
-    def __init__(self, player_names, starting_chips, max_hands):
+    def __init__(self, player_names, starting_chips, max_hands, window, width, height):
+        self.window: pygame.Surface = window
+        self.width = width
+        self.height = height
         self.starting_chips = starting_chips
         self.players = create_players(player_names, starting_chips)
         self.button = randrange(0, len(player_names))
@@ -33,7 +45,13 @@ class Badugi:
         Test Game
         """
         run = True
+        clock = pygame.time.Clock()
         while run:
+            clock.tick(20)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    run = False
+                    break
             self.print_info()
             is_betting_stage = self.dealer.stage % 2 == 0
             # Main loop
@@ -57,7 +75,43 @@ class Badugi:
                     print("ERROR" * 99)
             else:
                 self.deal_new_hand()
+            self.draw_game()
+            pygame.display.update()
         return False
+
+    def draw_game(self):
+        self.window.fill(self.WHITE)
+        self.window.blit(self.BG, (0, 0))
+        self._draw_dealer()
+        self._draw_players()
+
+    def _draw_dealer(self):
+        text = self.BIG_FONT.render(f"Pot: {self.dealer.pot}", True, self.WHITE)
+        self.window.blit(text, (20, 75))
+        text = self.BIG_FONT.render(
+            f"Turn: {self.players[self.dealer.turn].name}", True, self.WHITE
+        )
+        self.window.blit(text, (20, 125))
+        for i, msg in enumerate(self.dealer.actions[-10:]):
+            text = self.FONT.render(msg, True, self.WHITE)
+            self.window.blit(text, (20, 250 + (i * 30)))
+
+    def _draw_players(self):
+        # Player 1
+        p1_x = self.width // 3
+        p1_y = 50
+        text = self.BIG_FONT.render(self.players[0].name, True, self.WHITE)
+        self.window.blit(text, (p1_x, p1_y))
+        for i, card in enumerate(self.players[0].hand):
+            self.window.blit(card["img"], ((p1_x + 200) + (i * 100), p1_y))
+
+        # Player 2
+        p2_x = self.width // 3
+        p2_y = 600
+        text = self.BIG_FONT.render(self.players[0].name, True, self.WHITE)
+        self.window.blit(text, (p2_x, p2_y))
+        for i, card in enumerate(self.players[0].hand):
+            self.window.blit(card["img"], ((p2_x + 200) + (i * 100), p2_y))
 
     def test_ai(self, ai_bet_net, ai_swap_net):
         """
@@ -163,7 +217,7 @@ class Badugi:
         if self.is_not_training:
             print(f"player {player.name} making bet decision: {decision} ")
         if decision == 0:
-            player.fold()
+            player.fold(self.dealer)
         elif decision == 1:
             player.call(self.dealer)
         elif decision == 2:
@@ -197,7 +251,7 @@ class Badugi:
         if self.is_not_training:
             print(f"player {player.name} bet decision: {decision} ")
         if decision == 1:
-            player.fold()
+            player.fold(self.dealer)
         if decision == 3 and is_not_capped:
             player.bet(self.dealer, self.players)
         else:
@@ -277,11 +331,6 @@ class Badugi:
         self.dealer.shuffle_deck()
         self.hand_active = True
         # Blinds
-        pl = len(self.players)
-        sb_index = self.button if pl == 2 else (self.button + 1) % pl
-        bb_index = (self.button + 1) % pl if pl == 2 else (self.button + 2) % pl
-        self.players[sb_index].post_sb(self.dealer)
-        self.players[bb_index].post_bb(self.dealer)
         # Deal cards
         for player in self.players:
             player.reset()
@@ -290,6 +339,11 @@ class Badugi:
                 player_hand.append(self.dealer.deck.pop())
             player.hand = sort_badugi_hand(player_hand)
             player.hand_rank = get_hand_rank(player.hand)
+        pl = len(self.players)
+        sb_index = self.button if pl == 2 else (self.button + 1) % pl
+        bb_index = (self.button + 1) % pl if pl == 2 else (self.button + 2) % pl
+        self.players[sb_index].post_sb(self.dealer)
+        self.players[bb_index].post_bb(self.dealer)
 
     def finish_hand(self):
         if self.is_not_training:
@@ -340,11 +394,11 @@ def create_players(player_names, starting_chips):
 
 
 if __name__ == "__main__":
-    players = ["Player1", "Player2"]
-    max_hands = 3
-    badugi = Badugi(players, 20000, max_hands)
-
-    badugi.main_loop()
-    for player in badugi.players:
-        print(player.name)
-        print(player.chips)
+    players = ["Player1", "AI"]
+    max_hands = 4
+    # pygame.display.set_caption("Badugi")
+    # width, height = 1400, 800
+    # window = pygame.display.set_mode((width, height))
+    # badugi = Badugi(players, 1000, max_hands, window, width, height)
+    # badugi.test_game()
+    # pygame.quit()

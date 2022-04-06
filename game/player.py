@@ -31,36 +31,46 @@ class Player:
         self.chips += amount
 
     def post_sb(self, dealer):
-        self.chips_in_front = dealer.sb
+        self.chips_in_front += dealer.sb
         self.chips -= dealer.sb
         dealer.pot += dealer.sb
-        # print("posted sb:", self.name, dealer.sb)
+        action_msg = f"{self.name} posts {dealer.sb}."
+        dealer.actions.append(action_msg)
 
     def post_bb(self, dealer):
-        self.chips_in_front = dealer.bb
+        self.chips_in_front += dealer.bb
         self.chips -= dealer.bb
         dealer.pot += dealer.bb
-        # print("posted bb:", self.name, dealer.bb)
+        action_msg = f"{self.name} posts {dealer.bb}."
+        dealer.actions.append(action_msg)
 
-    def fold(self):
+    def fold(self, dealer):
         self.chips_in_front = 0
         self.folded = True
         self.acted = True
         self.swapped = True
-        print(self.name, " folded.")
+        action_msg = f"{self.name} folds."
+        dealer.actions.append(action_msg)
 
     def call(self, dealer):  # check/call
-        to_call = dealer.to_call - self.chips_in_front
-        self.chips_in_front += to_call
-        self.chips -= to_call
-        dealer.pot += to_call
+        is_call = dealer.to_call > self.chips_in_front
+        cost_plr_to_call = dealer.to_call - self.chips_in_front
+        self.chips_in_front += cost_plr_to_call
+        self.chips -= cost_plr_to_call
+        dealer.pot += cost_plr_to_call
         self.acted = True
-        print(self.name, " call:", self.chips_in_front)
+        action_msg = (
+            f"{self.name} calls {dealer.to_call}."
+            if is_call
+            else f"{self.name} checks."
+        )
+        dealer.actions.append(action_msg)
 
     def bet(self, dealer, players):
-        to_call = dealer.to_call - self.chips_in_front
+        print("self.chips_in_front:", self.chips_in_front)
+        cost_plr_to_call = dealer.to_call - self.chips_in_front
         bet_size = dealer.bb if dealer.stage < 3 else dealer.bb * 2
-        to_bet = to_call + bet_size
+        to_bet = cost_plr_to_call + bet_size
         self.chips_in_front += to_bet
         self.chips -= to_bet
         dealer.pot += to_bet
@@ -69,14 +79,15 @@ class Player:
         for player in players:
             if player.name != self.name and not player.folded:
                 player.acted = False
-        print(self.name, " raise to:", self.chips_in_front, "cost:", dealer.to_call)
+        action_msg = f"{self.name} raises to {dealer.to_call}."
+        dealer.actions.append(action_msg)
         self.acted = True
 
     def draw_number_of_cards(self, dealer, n):
         if self.vaihdot > 4:
             print("ERROR", self.vaihdot)
         if len(dealer.deck) < 15:
-            print("ERROR deck", len(dealer.deck), dealer.vaihtajat)
+            print("ERROR deck", len(dealer.deck), dealer.actions)
         for i in range(n):
             try:
                 self.hand[3 - i] = dealer.deck.pop()
@@ -84,8 +95,8 @@ class Player:
                 print("kortit loppu", dealer.deck)
                 raise
         self.vaihdot += 1
-        vaihto = f"Stage: {dealer.stage}, Vaihtaja: {self.name}, N:{n}"
-        dealer.vaihtajat.append(vaihto)
+        action_msg = f"Player {self.name} draws {n}."
+        dealer.actions.append(action_msg)
         self.hand = sort_badugi_hand(self.hand)
         self.hand_rank = get_hand_rank(self.hand)
         self.swapped = True

@@ -1,10 +1,17 @@
+import pygame
+
 from game.game import Badugi
 
 
 def test_game():
-    max_hands = 4
-    badugi = Badugi(["Player 1", "Pelaaja 2"], 1000, max_hands)
+    players = ["Player1", "AI"]
+    max_hands = 1
+    pygame.display.set_caption("Badugi")
+    width, height = 1400, 800
+    window = pygame.display.set_mode((width, height))
+    badugi = Badugi(players, 1000, max_hands, window, width, height)
     badugi.test_game()
+    pygame.quit()
 
 
 if __name__ == "__main__":
