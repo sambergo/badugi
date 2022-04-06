@@ -30,30 +30,31 @@ class Badugi:
     AVATAR2 = pygame.transform.scale(
         pygame.image.load("./PNG/tiger-head.png"), (100, 100)
     )
-
-    # start_button = pygame.draw.rect(screen,(0,0,240),(150,90,100,50));
+    DEALER_BUTTON = pygame.transform.scale(
+        pygame.image.load("./PNG/dealer_button.png"), (50, 50)
+    )
 
     def __init__(self, player_names, starting_chips, max_hands, window, width, height):
-        self.window: pygame.Surface = window
-        self.width = width
-        self.height = height
-        self.starting_chips = starting_chips
+        self.WINDOW: pygame.Surface = window
+        self.WIDTH = width
+        self.HEIGHT = height
+        self.STARTING_CHIPS = starting_chips
         self.players = create_players(player_names, starting_chips)
         self.button = randrange(0, len(player_names))
         self.MAX_HANDS = max_hands
-        self.bb = float(self.BIG_BLIND)
-        self.sb = float(self.BIG_BLIND / 2)
+        self.BB = float(self.BIG_BLIND)
+        self.SB = float(self.BIG_BLIND / 2)
         self.hands_played = 0
         self.hand_active = False
         self.dealer = Dealer(
-            self.players, self.button, self.bb, create_deck(self.window)
+            self.players, self.button, self.BB, create_deck(self.WINDOW)
         )
         self.is_not_training = True
         self.MAX_STAGES = 7
         self.clock = pygame.time.Clock()
-        self.p1x = self.width // 4
+        self.p1x = self.WIDTH // 4
         self.p1y = 50
-        self.p2x = self.width // 4
+        self.p2x = self.WIDTH // 4
         self.p2y = 600
 
     def test_game(self):
@@ -96,41 +97,38 @@ class Badugi:
         return False
 
     def draw_game(self):
-        self.window.fill(self.BLACK)
-        self.window.blit(self.BG, (0, 0))
+        self.WINDOW.fill(self.BLACK)
+        self.WINDOW.blit(self.BG, (0, 0))
         self._draw_dealer()
         self._draw_players()
 
     def _draw_dealer(self):
-        dx = self.width // 3
-        dy = self.height // 2.6
+        dx = self.WIDTH // 3
+        dy = self.HEIGHT // 2.6
         text = self.BIG_FONT.render(f"Pot: {self.dealer.pot}", True, self.WHITE)
-        self.window.blit(text, (dx, dy))
+        self.WINDOW.blit(text, (dx, dy))
         text = self.BIG_FONT.render(
-            f"Turn: {self.players[self.dealer.turn].name}", True, self.GREEN
+            f"Draws left: {3 - self.dealer.stage // 2}", True, self.WHITE
         )
-        self.window.blit(text, (dx, dy + 50))
+        self.WINDOW.blit(text, (dx, dy + 50))
         # Actions on left side
         for i, msg in enumerate(self.dealer.actions[-10:]):
             text = self.FONT.render(msg, True, self.WHITE)
-            self.window.blit(text, (20, 50 + (i * 30)))
+            self.WINDOW.blit(text, (20, 50 + (i * 30)))
 
-        # pygame.draw.rect(self.window, self.WHITE, (150, 90, 100, 50), 50)
-        # pygame.draw.ellipse(self.window, self.WHITE, (50, 150, 150, 50), 50)
-
-    def _draw_players(self):
+    def _draw_players(self):  # TODO: multiplayer
         # Player 1
         text = self.BIG_FONT.render(
             self.players[0].name,
             True,
-            self.GREEN if self.dealer.turn == 0 else self.WHITE,
+            "yellow" if self.dealer.turn == 0 else self.WHITE,
         )
-        self.window.blit(text, (self.p1x, self.p1y))
+        self.WINDOW.blit(text, (self.p1x, self.p1y))
         text = self.FONT.render(str(self.players[0].chips), True, self.WHITE)
-        self.window.blit(text, (self.p1x, self.p1y + 40))
-        self.window.blit(self.AVATAR1, (self.p1x, self.p1y + 70))
+        self.WINDOW.blit(text, (self.p1x, self.p1y + 40))
+        self.WINDOW.blit(self.AVATAR1, (self.p1x, self.p1y + 70))
         for i, card in enumerate(self.players[0].hand):
-            self.window.blit(card.img, ((self.p1x + 200) + (i * 100), self.p1y))
+            card.show(((self.p1x + 200) + (i * 100), self.p1y))
 
         # Player 2
         text = self.BIG_FONT.render(
@@ -138,12 +136,17 @@ class Badugi:
             True,
             self.GREEN if self.dealer.turn == 1 else self.WHITE,
         )
-        self.window.blit(text, (self.p2x, self.p2y))
+        self.WINDOW.blit(text, (self.p2x, self.p2y))
         text = self.FONT.render(str(self.players[1].chips), True, self.WHITE)
-        self.window.blit(text, (self.p2x, self.p2y + 40))
-        self.window.blit(self.AVATAR2, (self.p2x, self.p2y + 70))
+        self.WINDOW.blit(text, (self.p2x, self.p2y + 40))
+        self.WINDOW.blit(self.AVATAR2, (self.p2x, self.p2y + 70))
         for i, card in enumerate(self.players[1].hand):
-            self.window.blit(card.img, ((self.p2x + 200) + (i * 100), self.p2y))
+            card.show(((self.p2x + 200) + (i * 100), self.p2y))
+        # Dealer button
+        self.WINDOW.blit(
+            self.DEALER_BUTTON,
+            (self.p1x + 120, self.p1y + 150 if self.button == 0 else self.p2y - 40),
+        )
 
     def test_ai(self, ai_bet_net, ai_swap_net):
         """
@@ -174,6 +177,8 @@ class Badugi:
                     print("ERROR" * 99)
             else:
                 self.deal_new_hand()
+            self.draw_game()
+            pygame.display.update()
         return False
 
     def train_swap(self, genome1, genome2, config):
@@ -273,10 +278,10 @@ class Badugi:
         self.update_street()
 
     def calculate_fitness(self):
-        self.genome1.fitness += self.players[0].chips - self.starting_chips
-        self.genome2.fitness += self.players[1].chips - self.starting_chips
+        self.genome1.fitness += self.players[0].chips - self.STARTING_CHIPS
+        self.genome2.fitness += self.players[1].chips - self.STARTING_CHIPS
 
-    def wait_for_player_decision(self, player, is_not_capped) -> int:
+    def wait_for_player_bet(self, player, is_not_capped) -> int:
         waiting_decision = True
         is_call = player.chips_in_front < self.dealer.to_call
         button_texts = ["Fold", "Call" if is_call else "Check"]
@@ -288,7 +293,7 @@ class Badugi:
         bx = self.p1x + dis_from_x if self.dealer.turn == 0 else self.p2x + dis_from_x
         by = self.p1y + dis_from_y if self.dealer.turn == 0 else self.p2y + dis_from_y
         for i, btn_text in enumerate(button_texts):
-            button = Button(self.window, btn_text, (bx, by + (i * 43)), self.BIG_FONT)
+            button = Button(self.WINDOW, btn_text, (bx, by + (i * 43)), self.BIG_FONT)
             button.show()
             buttons.append(button)
         pygame.display.update()
@@ -307,9 +312,29 @@ class Badugi:
         pygame.display.update()
         return decision
 
+    def wait_for_player_swap(self, player):
+        waiting_decision = True
+        dis_from_x = 800
+        dis_from_y = 50
+        bx = self.p1x + dis_from_x if self.dealer.turn == 0 else self.p2x + dis_from_x
+        by = self.p1y + dis_from_y if self.dealer.turn == 0 else self.p2y + dis_from_y
+        confirm_button = Button(self.WINDOW, "Ready", (bx, by), self.BIG_FONT)
+        confirm_button.show()
+        pygame.display.update()
+        while waiting_decision:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                for i, card in enumerate(player.hand):
+                    if card.any_click(event):
+                        print("jep")
+                if confirm_button.any_click(event):
+                    waiting_decision = False
+            self.clock.tick(30)
+
     def make_player_bet(self, player):
         is_not_capped = self.dealer.street_bets < self.dealer.cap
-        decision = self.wait_for_player_decision(player, is_not_capped)
+        decision = self.wait_for_player_bet(player, is_not_capped)
         print("decision:", decision)
         # decision = int(input("1. Fold, 2. Check/call, 3. Raise"))
         # decision = randrange(1, 4)
@@ -324,11 +349,13 @@ class Badugi:
         self.update_street()
 
     def make_player_swap(self, player):
-        decision = int(input("Montako vaihdetaan"))
+        # decision = int(input("Montako vaihdetaan"))
         # decision = randrange(0, 4)
-        if self.is_not_training:
-            print(f"player {player.name} swap decision: {decision} ")
-        player.draw_number_of_cards(self.dealer, decision)
+        self.wait_for_player_swap(player)
+        player.draw_selected_cards(self.dealer)
+        # if self.is_not_training:
+        #     print(f"player {player.name} swap decision: {decision} ")
+        # player.draw_number_of_cards(self.dealer, decision)
         self.update_street()
 
     def update_street(self):
@@ -392,8 +419,8 @@ class Badugi:
         # Dealer
         if self.is_not_training:
             print(f"dealing new hand")
-        new_deck = create_deck(self.window)
-        self.dealer = Dealer(self.players, self.button, self.bb, new_deck)
+        new_deck = create_deck(self.WINDOW)
+        self.dealer = Dealer(self.players, self.button, self.BB, new_deck)
         self.dealer.shuffle_deck()
         self.hand_active = True
         # Blinds

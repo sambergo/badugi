@@ -101,7 +101,15 @@ class Player:
         self.hand_rank = get_hand_rank(self.hand)
         self.swapped = True
 
-    def select_card(self, card):
-        old_bool = self.hand[card]["selected"]
-        self.hand[card]["selected"] = not old_bool
-        # print("selected", card)
+    def draw_selected_cards(self, dealer):
+        n = 0
+        for i, card in enumerate(self.hand):
+            if card.selected:
+                self.hand[i] = dealer.deck.pop()
+                n += 1
+        self.vaihdot += 1
+        action_msg = f"Player {self.name} draws {n}."
+        dealer.actions.append(action_msg)
+        self.hand = sort_badugi_hand(self.hand)
+        self.hand_rank = get_hand_rank(self.hand)
+        self.swapped = True
