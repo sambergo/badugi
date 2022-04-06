@@ -27,9 +27,6 @@ class Player:
         self.vaihdot = 0
         self.hand_rank = 1
 
-    def move_chips(self, amount):
-        self.chips += amount
-
     def post_sb(self, dealer):
         self.chips_in_front += dealer.sb
         self.chips -= dealer.sb
@@ -67,7 +64,6 @@ class Player:
         dealer.actions.append(action_msg)
 
     def bet(self, dealer, players):
-        print("self.chips_in_front:", self.chips_in_front)
         cost_plr_to_call = dealer.to_call - self.chips_in_front
         bet_size = dealer.bb if dealer.stage < 3 else dealer.bb * 2
         to_bet = cost_plr_to_call + bet_size
@@ -83,11 +79,7 @@ class Player:
         dealer.actions.append(action_msg)
         self.acted = True
 
-    def draw_number_of_cards(self, dealer, n):
-        if self.vaihdot > 4:
-            print("ERROR", self.vaihdot)
-        if len(dealer.deck) < 15:
-            print("ERROR deck", len(dealer.deck), dealer.actions)
+    def swap_number_of_cards(self, dealer, n):
         for i in range(n):
             try:
                 self.hand[3 - i] = dealer.deck.pop()
@@ -101,7 +93,7 @@ class Player:
         self.hand_rank = get_hand_rank(self.hand)
         self.swapped = True
 
-    def draw_selected_cards(self, dealer):
+    def swap_selected_cards(self, dealer):
         n = 0
         for i, card in enumerate(self.hand):
             if card.selected:

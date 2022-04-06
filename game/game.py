@@ -274,7 +274,7 @@ class Badugi:
         decision = output.index(max(output))
         if self.is_not_training:
             print(f"player {player.name} swaps cards: {decision} ")
-        player.draw_number_of_cards(self.dealer, decision)
+        player.swap_number_of_cards(self.dealer, decision)
         self.update_street()
 
     def calculate_fitness(self):
@@ -349,13 +349,8 @@ class Badugi:
         self.update_street()
 
     def make_player_swap(self, player):
-        # decision = int(input("Montako vaihdetaan"))
-        # decision = randrange(0, 4)
         self.wait_for_player_swap(player)
-        player.draw_selected_cards(self.dealer)
-        # if self.is_not_training:
-        #     print(f"player {player.name} swap decision: {decision} ")
-        # player.draw_number_of_cards(self.dealer, decision)
+        player.swap_selected_cards(self.dealer)
         self.update_street()
 
     def update_street(self):
@@ -370,30 +365,6 @@ class Badugi:
         else:
             self.dealer.next_turn(self.players, new_street=False)
 
-    def main_loop(self):
-        """
-        Runs one:
-            - deal_new_hand
-            - finish_hand
-            - next_street
-            - hand_loop
-        and updates drawnings
-        """
-        # Loop
-        if self.hands_played >= self.MAX_HANDS:
-            return False
-        elif self.hand_active:
-            # self.dealer.next_turn(self.players, new_street=False)
-            pass
-            # print("main loop hand active")
-            # self.draw_cards_loop()
-        else:
-            if self.hands_played < self.MAX_HANDS:
-                self.deal_new_hand()
-            else:
-                pass
-        return f"active: {self.hand_active}, played: {self.hands_played}, turn: {self.dealer.turn}, stage: {self.dealer.stage} "
-
     def next_street(self):
         self.dealer.next_turn(self.players, new_street=True)
         self.dealer.to_call = 0
@@ -405,25 +376,16 @@ class Badugi:
 
     def deal_new_hand(self):
         """
-        Plays a single hand:
-            - create dealer
-            - shuffle_deck
-            - blinds
-            - deal cards
-            - preflop
-            - change cards
-            - award pot
-            - move button
-        :returns: Amount of chips of each player.
+        - Creates new dealer
+        - Resets players
+        - Posts blinds
         """
-        # Dealer
         if self.is_not_training:
             print(f"dealing new hand")
         new_deck = create_deck(self.WINDOW)
         self.dealer = Dealer(self.players, self.button, self.BB, new_deck)
         self.dealer.shuffle_deck()
         self.hand_active = True
-        # Blinds
         # Deal cards
         for player in self.players:
             player.reset()
@@ -433,6 +395,7 @@ class Badugi:
             player.hand = sort_badugi_hand(player_hand)
             player.hand_rank = get_hand_rank(player.hand)
         pl = len(self.players)
+        # Blinds
         sb_index = self.button if pl == 2 else (self.button + 1) % pl
         bb_index = (self.button + 1) % pl if pl == 2 else (self.button + 2) % pl
         self.players[sb_index].post_sb(self.dealer)
