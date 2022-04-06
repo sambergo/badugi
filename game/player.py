@@ -105,3 +105,11 @@ class Player:
         self.hand = sort_badugi_hand(self.hand)
         self.hand_rank = get_hand_rank(self.hand)
         self.swapped = True
+
+
+def create_players(player_names, starting_chips):
+    player_list = []
+    for name in player_names:
+        new_player = Player(name, starting_chips)
+        player_list.append(new_player)
+    return player_list

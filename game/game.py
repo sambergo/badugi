@@ -8,6 +8,7 @@ from .dealer import Dealer, create_deck
 from .player import Player
 from .tools.get_winners import get_hand_rank, get_winners
 from .tools.sort_hand import sort_badugi_hand
+from .player import create_players
 
 pygame.init()
 
