@@ -23,6 +23,12 @@ class Badugi:
     GREEN = (0, 128, 0)
     BIG_BLIND = 10
     BG = pygame.image.load("./PNG/table.png")
+    AVATAR1 = pygame.transform.scale(
+        pygame.image.load("./PNG/bear-face.png"), (100, 100)
+    )
+    AVATAR2 = pygame.transform.scale(
+        pygame.image.load("./PNG/tiger-head.png"), (100, 100)
+    )
 
     def __init__(self, player_names, starting_chips, max_hands, window, width, height):
         self.window: pygame.Surface = window
@@ -80,36 +86,41 @@ class Badugi:
         return False
 
     def draw_game(self):
-        self.window.fill(self.WHITE)
+        self.window.fill(self.BLACK)
         self.window.blit(self.BG, (0, 0))
         self._draw_dealer()
         self._draw_players()
 
     def _draw_dealer(self):
+        dx = self.width // 3
+        dy = self.height // 2.6
         text = self.BIG_FONT.render(f"Pot: {self.dealer.pot}", True, self.WHITE)
-        self.window.blit(text, (20, 75))
+        self.window.blit(text, (dx, dy))
         text = self.BIG_FONT.render(
             f"Turn: {self.players[self.dealer.turn].name}", True, self.WHITE
         )
-        self.window.blit(text, (20, 125))
+        self.window.blit(text, (dx, dy + 50))
+        # Actions @ left
         for i, msg in enumerate(self.dealer.actions[-10:]):
             text = self.FONT.render(msg, True, self.WHITE)
-            self.window.blit(text, (20, 250 + (i * 30)))
+            self.window.blit(text, (20, 50 + (i * 30)))
 
     def _draw_players(self):
         # Player 1
-        p1_x = self.width // 3
+        p1_x = self.width // 4
         p1_y = 50
         text = self.BIG_FONT.render(self.players[0].name, True, self.WHITE)
         self.window.blit(text, (p1_x, p1_y))
+        self.window.blit(self.AVATAR1, (p1_x, p1_y + 50))
         for i, card in enumerate(self.players[0].hand):
             self.window.blit(card["img"], ((p1_x + 200) + (i * 100), p1_y))
 
         # Player 2
-        p2_x = self.width // 3
+        p2_x = self.width // 4
         p2_y = 600
-        text = self.BIG_FONT.render(self.players[0].name, True, self.WHITE)
+        text = self.BIG_FONT.render(self.players[1].name, True, self.WHITE)
         self.window.blit(text, (p2_x, p2_y))
+        self.window.blit(self.AVATAR2, (p2_x, p2_y + 50))
         for i, card in enumerate(self.players[0].hand):
             self.window.blit(card["img"], ((p2_x + 200) + (i * 100), p2_y))
 
