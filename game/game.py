@@ -3,6 +3,7 @@ from random import randrange
 import neat
 import pygame
 
+from .button import Button
 from .dealer import Dealer
 from .player import Player
 from .tools.get_winners import get_hand_rank, get_winners
@@ -30,6 +31,8 @@ class Badugi:
         pygame.image.load("./PNG/tiger-head.png"), (100, 100)
     )
 
+    # start_button = pygame.draw.rect(screen,(0,0,240),(150,90,100,50));
+
     def __init__(self, player_names, starting_chips, max_hands, window, width, height):
         self.window: pygame.Surface = window
         self.width = width
@@ -45,15 +48,20 @@ class Badugi:
         self.dealer = Dealer(self.players, self.button, self.bb)
         self.is_not_training = True
         self.MAX_STAGES = 7
+        self.clock = pygame.time.Clock()
+        self.p1x = self.width // 4
+        self.p1y = 50
+        self.p2x = self.width // 4
+        self.p2y = 600
 
     def test_game(self):
         """
         Test Game
         """
         run = True
-        clock = pygame.time.Clock()
+        # clock = pygame.time.Clock()
         while run:
-            clock.tick(20)
+            self.clock.tick(20)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     run = False
@@ -97,32 +105,43 @@ class Badugi:
         text = self.BIG_FONT.render(f"Pot: {self.dealer.pot}", True, self.WHITE)
         self.window.blit(text, (dx, dy))
         text = self.BIG_FONT.render(
-            f"Turn: {self.players[self.dealer.turn].name}", True, self.WHITE
+            f"Turn: {self.players[self.dealer.turn].name}", True, self.GREEN
         )
         self.window.blit(text, (dx, dy + 50))
-        # Actions @ left
+        # Actions on left side
         for i, msg in enumerate(self.dealer.actions[-10:]):
             text = self.FONT.render(msg, True, self.WHITE)
             self.window.blit(text, (20, 50 + (i * 30)))
 
+        # pygame.draw.rect(self.window, self.WHITE, (150, 90, 100, 50), 50)
+        # pygame.draw.ellipse(self.window, self.WHITE, (50, 150, 150, 50), 50)
+
     def _draw_players(self):
         # Player 1
-        p1_x = self.width // 4
-        p1_y = 50
-        text = self.BIG_FONT.render(self.players[0].name, True, self.WHITE)
-        self.window.blit(text, (p1_x, p1_y))
-        self.window.blit(self.AVATAR1, (p1_x, p1_y + 50))
+        text = self.BIG_FONT.render(
+            self.players[0].name,
+            True,
+            self.GREEN if self.dealer.turn == 0 else self.WHITE,
+        )
+        self.window.blit(text, (self.p1x, self.p1y))
+        text = self.FONT.render(str(self.players[0].chips), True, self.WHITE)
+        self.window.blit(text, (self.p1x, self.p1y + 40))
+        self.window.blit(self.AVATAR1, (self.p1x, self.p1y + 70))
         for i, card in enumerate(self.players[0].hand):
-            self.window.blit(card["img"], ((p1_x + 200) + (i * 100), p1_y))
+            self.window.blit(card["img"], ((self.p1x + 200) + (i * 100), self.p1y))
 
         # Player 2
-        p2_x = self.width // 4
-        p2_y = 600
-        text = self.BIG_FONT.render(self.players[1].name, True, self.WHITE)
-        self.window.blit(text, (p2_x, p2_y))
-        self.window.blit(self.AVATAR2, (p2_x, p2_y + 50))
-        for i, card in enumerate(self.players[0].hand):
-            self.window.blit(card["img"], ((p2_x + 200) + (i * 100), p2_y))
+        text = self.BIG_FONT.render(
+            self.players[1].name,
+            True,
+            self.GREEN if self.dealer.turn == 1 else self.WHITE,
+        )
+        self.window.blit(text, (self.p2x, self.p2y))
+        text = self.FONT.render(str(self.players[1].chips), True, self.WHITE)
+        self.window.blit(text, (self.p2x, self.p2y + 40))
+        self.window.blit(self.AVATAR2, (self.p2x, self.p2y + 70))
+        for i, card in enumerate(self.players[1].hand):
+            self.window.blit(card["img"], ((self.p2x + 200) + (i * 100), self.p2y))
 
     def test_ai(self, ai_bet_net, ai_swap_net):
         """
@@ -255,10 +274,43 @@ class Badugi:
         self.genome1.fitness += self.players[0].chips - self.starting_chips
         self.genome2.fitness += self.players[1].chips - self.starting_chips
 
+    def wait_for_player_decision(self, player, is_not_capped) -> int:
+        waiting_decision = True
+        is_call = player.chips_in_front < self.dealer.to_call
+        button_texts = ["Fold", "Call" if is_call else "Check"]
+        if is_not_capped:
+            button_texts.append("Raise" if self.dealer.street_bets != 0 else "Bet")
+        buttons = []
+        dis_from_x = 700
+        dis_from_y = 20
+        bx = self.p1x + dis_from_x if self.dealer.turn == 0 else self.p2x + dis_from_x
+        by = self.p1y + dis_from_y if self.dealer.turn == 0 else self.p2y + dis_from_y
+        for i, btn_text in enumerate(button_texts):
+            button = Button(self.window, btn_text, (bx, by + (i * 43)), self.BIG_FONT)
+            button.show()
+            buttons.append(button)
+        pygame.display.update()
+        decision = 1
+        while waiting_decision:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                for i, btn in enumerate(buttons, start=1):
+                    if btn.any_click(event):
+                        decision = i
+                        waiting_decision = False
+            self.clock.tick(30)
+        for btn in buttons:
+            btn.show()
+        pygame.display.update()
+        return decision
+
     def make_player_bet(self, player):
-        decision = int(input("1. Fold, 2. Check/call, 3. Raise"))
-        # decision = randrange(1, 4)
         is_not_capped = self.dealer.street_bets < self.dealer.cap
+        decision = self.wait_for_player_decision(player, is_not_capped)
+        print("decision:", decision)
+        # decision = int(input("1. Fold, 2. Check/call, 3. Raise"))
+        # decision = randrange(1, 4)
         if self.is_not_training:
             print(f"player {player.name} bet decision: {decision} ")
         if decision == 1:
