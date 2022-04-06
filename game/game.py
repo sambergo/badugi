@@ -4,7 +4,7 @@ import neat
 import pygame
 
 from .button import Button
-from .dealer import Dealer
+from .dealer import Dealer, create_deck
 from .player import Player
 from .tools.get_winners import get_hand_rank, get_winners
 from .tools.sort_hand import sort_badugi_hand
@@ -45,7 +45,9 @@ class Badugi:
         self.sb = float(self.BIG_BLIND / 2)
         self.hands_played = 0
         self.hand_active = False
-        self.dealer = Dealer(self.players, self.button, self.bb)
+        self.dealer = Dealer(
+            self.players, self.button, self.bb, create_deck(self.window)
+        )
         self.is_not_training = True
         self.MAX_STAGES = 7
         self.clock = pygame.time.Clock()
@@ -128,7 +130,7 @@ class Badugi:
         self.window.blit(text, (self.p1x, self.p1y + 40))
         self.window.blit(self.AVATAR1, (self.p1x, self.p1y + 70))
         for i, card in enumerate(self.players[0].hand):
-            self.window.blit(card["img"], ((self.p1x + 200) + (i * 100), self.p1y))
+            self.window.blit(card.img, ((self.p1x + 200) + (i * 100), self.p1y))
 
         # Player 2
         text = self.BIG_FONT.render(
@@ -141,7 +143,7 @@ class Badugi:
         self.window.blit(text, (self.p2x, self.p2y + 40))
         self.window.blit(self.AVATAR2, (self.p2x, self.p2y + 70))
         for i, card in enumerate(self.players[1].hand):
-            self.window.blit(card["img"], ((self.p2x + 200) + (i * 100), self.p2y))
+            self.window.blit(card.img, ((self.p2x + 200) + (i * 100), self.p2y))
 
     def test_ai(self, ai_bet_net, ai_swap_net):
         """
@@ -390,7 +392,8 @@ class Badugi:
         # Dealer
         if self.is_not_training:
             print(f"dealing new hand")
-        self.dealer = Dealer(self.players, self.button, self.bb)
+        new_deck = create_deck(self.window)
+        self.dealer = Dealer(self.players, self.button, self.bb, new_deck)
         self.dealer.shuffle_deck()
         self.hand_active = True
         # Blinds
@@ -439,9 +442,9 @@ class Badugi:
             AI stack: {self.players[1].chips}
             {"-"*20}
             AI hand:
-            {[str(c["number"])+c["suit"] for c in  self.players[1].hand]}
+            {[str(c.number)+c.suit for c in  self.players[1].hand]}
             Player hand:
-            {[str(c["number"])+c["suit"] for c in  self.players[0].hand]}
+            {[str(c.number)+c.suit for c in  self.players[0].hand]}
             {"-"*20}
 
                 """

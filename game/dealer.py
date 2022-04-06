@@ -4,14 +4,16 @@ from typing import List
 
 import pygame
 
+from .card import Card
+
 
 class Dealer:
     """
     New dealer is created for each hand.
     """
 
-    def __init__(self, players, button, bb):
-        self.deck = create_deck()
+    def __init__(self, players, button, bb, deck):
+        self.deck = deck
         self.bb = bb
         self.sb = bb / 2
         self.pot = 0
@@ -56,15 +58,15 @@ def get_next_turn_index(players, start):
     return -1
 
 
-def create_deck():
-
+def create_deck(window):
     suits = ["C", "D", "H", "S"]
     deck = []
     for suit in suits:
         for i in range(1, 14):
             img_src = pygame.image.load(os.path.join("PNG", f"{str(i)}{suit}.png"))
             img = pygame.transform.scale(img_src, (100, 175))
-            deck.append({"suit": suit, "number": i, "selected": False, "img": img})
+            # deck.append({"suit": suit, "number": i, "selected": False, "img": img})
+            deck.append(Card(window, suit, i, img))
 
     # deck = [
     #     {"suit": suit, "number": number}

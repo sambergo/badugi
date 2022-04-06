@@ -37,11 +37,11 @@ def get_hand_rank(hand) -> int:
     """
     badugi_hand = []
     for card in hand:
-        has_suit = card["suit"] in [bhc["suit"] for bhc in badugi_hand]
-        has_number = card["number"] in [bhc["number"] for bhc in badugi_hand]
+        has_suit = card.suit in [bhc.suit for bhc in badugi_hand]
+        has_number = card.number in [bhc.number for bhc in badugi_hand]
         if not has_suit and not has_number:
             badugi_hand.append(card)
-    k = "-".join(map(str, [x["number"] for x in badugi_hand]))
+    k = "-".join(map(str, [x.number for x in badugi_hand]))
     rank = hand_ranks[k]
     return rank
 
