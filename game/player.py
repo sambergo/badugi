@@ -75,7 +75,7 @@ class Player:
         for player in players:
             if player.name != self.name and not player.folded:
                 player.acted = False
-        action_msg = f"{self.name} raises to {dealer.to_call}."
+        action_msg = f"{self.name} {'raises' if dealer.street_bets != 0 else 'bets' } to {dealer.to_call}."
         dealer.actions.append(action_msg)
         self.acted = True
 
