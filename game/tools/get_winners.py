@@ -1,5 +1,4 @@
 import json
-import os
 
 hand_ranks = json.loads(open("hands.json").read())
 # hand_ranks = json.loads(open(os.path.join("tools", "hands.json")).read())
@@ -11,7 +10,7 @@ def get_winners(players):
     :return: Filtered list of winner(s)
     """
     if len(players) == 1:
-        players
+        return [players[0].name]
     winners = []
     best_rank = 0
     for player in players:
@@ -44,13 +43,3 @@ def get_hand_rank(hand) -> int:
     k = "-".join(map(str, [x.number for x in badugi_hand]))
     rank = hand_ranks[k]
     return rank
-
-
-if __name__ == "__main__":
-    hand = [
-        {"suit": "d", "number": 2},
-        {"suit": "h", "number": 7},
-        {"suit": "c", "number": 12},
-        {"suit": "c", "number": 13},
-    ]
-    get_hand_rank(hand)

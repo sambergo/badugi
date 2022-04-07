@@ -4,7 +4,9 @@ from .tools.sort_hand import sort_badugi_hand
 
 class Player:
     """
-    docstring for Player.
+    Badugi player.
+    AI swaps x cards from sorted hand.
+    Humans swap selected cards.
     """
 
     def __init__(self, name, chips):
@@ -16,7 +18,6 @@ class Player:
         self.folded = False
         self.acted = False
         self.swapped = False
-        self.vaihdot = 0
 
     def reset(self):
         self.hand = []
@@ -24,7 +25,6 @@ class Player:
         self.acted = False
         self.folded = False
         self.swapped = False
-        self.vaihdot = 0
         self.hand_rank = 1
 
     def post_sb(self, dealer):
@@ -79,27 +79,21 @@ class Player:
         dealer.actions.append(action_msg)
         self.acted = True
 
-    def swap_number_of_cards(self, dealer, n):
+    def swap_for_ai(self, dealer, n):
         for i in range(n):
-            try:
-                self.hand[3 - i] = dealer.deck.pop()
-            except:
-                print("kortit loppu", dealer.deck)
-                raise
-        self.vaihdot += 1
+            self.hand[3 - i] = dealer.deck.pop()
         action_msg = f"Player {self.name} draws {n}."
         dealer.actions.append(action_msg)
         self.hand = sort_badugi_hand(self.hand)
         self.hand_rank = get_hand_rank(self.hand)
         self.swapped = True
 
-    def swap_selected_cards(self, dealer):
+    def swap_for_human(self, dealer):
         n = 0
         for i, card in enumerate(self.hand):
             if card.selected:
                 self.hand[i] = dealer.deck.pop()
                 n += 1
-        self.vaihdot += 1
         action_msg = f"Player {self.name} draws {n}."
         dealer.actions.append(action_msg)
         self.hand = sort_badugi_hand(self.hand)

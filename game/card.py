@@ -5,7 +5,7 @@ import pygame
 
 class Card:
     """
-    Signel card
+    Clickable card with pygame blit function.
     """
 
     card_back_src = pygame.image.load(os.path.join("PNG", "gray_back.png"))

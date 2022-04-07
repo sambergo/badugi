@@ -1,17 +1,12 @@
 from random import randrange
+from typing import List
 
 import neat
 import pygame
 
 from .button import Button
-from .dealer import (
-    Dealer,
-    create_deck,
-    deal_new_hand,
-    finish_hand,
-    next_street,
-    update_street,
-)
+from .dealer import Dealer, create_deck, deal_new_hand, finish_hand, update_street
+from .draw_pygame import draw_game
 from .player import create_players
 from .tools.get_winners import get_hand_rank
 
@@ -20,7 +15,18 @@ pygame.init()
 
 class Badugi:
     """
-    docstring for Badugi.
+    Play the game: play_ai()
+    Train AI:
+        - train_swap
+        - train_betting
+    Pygame testing: test_without_ai()
+    :intput:
+        - player_names: List[str]
+        - starting_chips: int
+        - max_hands: int
+        - window: pygame.display.set_mode()
+        - width: int
+        - height: int
     """
 
     BIG_FONT = pygame.font.SysFont("comicsans", 50)
@@ -40,8 +46,16 @@ class Badugi:
         pygame.image.load("./PNG/dealer_button.png"), (50, 50)
     )
 
-    def __init__(self, player_names, starting_chips, max_hands, window, width, height):
-        self.WINDOW: pygame.Surface = window
+    def __init__(
+        self,
+        player_names: List[str],
+        starting_chips: int,
+        max_hands: int,
+        window,
+        width: int,
+        height: int,
+    ):
+        self.WINDOW = window
         self.WIDTH = width
         self.HEIGHT = height
         self.STARTING_CHIPS = starting_chips
@@ -64,16 +78,14 @@ class Badugi:
         self.p2y = 600
         self.finish_hand = finish_hand
         self.update_street = update_street
-        self.next_street = next_street
         self.deal_new_hand = deal_new_hand
-        self.next_dealer_actions = []
+        self.draw_game = draw_game
 
-    def test_game(self):
+    def test_without_ai(self):
         """
-        Test Game
+        Test pygame with 2 human players.
         """
         run = True
-        # clock = pygame.time.Clock()
         while run:
             self.clock.tick(20)
             for event in pygame.event.get():
@@ -89,99 +101,33 @@ class Badugi:
                 self.finish_hand(self)
             elif self.hand_active and is_betting_stage:  # TODO: Not only HU
                 if self.dealer.turn == 0:
-                    self.make_player_bet(self.players[0])
+                    self.make_human_bet(self.players[0])
                 elif self.dealer.turn == 1:
-                    self.make_player_bet(self.players[1])
+                    self.make_human_bet(self.players[1])
                 else:
                     print("ERROR" * 99)
             elif self.hand_active and not is_betting_stage:
                 if self.dealer.turn == 0:
-                    self.make_player_swap(self.players[0])
+                    self.make_human_swap(self.players[0])
                 elif self.dealer.turn == 1:
-                    self.make_player_swap(self.players[1])
+                    self.make_human_swap(self.players[1])
                 else:
                     print("ERROR" * 99)
             else:
                 self.deal_new_hand(self)
-            self.draw_game()
+            self.draw_game(self)
             pygame.display.update()
         return False
 
-    def draw_game(self):
-        self.WINDOW.fill(self.BLACK)
-        self.WINDOW.blit(self.BG, (0, 0))
-        self._draw_dealer()
-        self._draw_players()
-
-    def _draw_dealer(self):
-        dx = self.WIDTH // 3
-        dy = self.HEIGHT // 2.6
-        text = self.BIG_FONT.render(f"Pot: {self.dealer.pot}", True, self.WHITE)
-        self.WINDOW.blit(text, (dx, dy))
-        text = self.BIG_FONT.render(
-            f"Draws left: {3 - self.dealer.stage // 2}", True, self.WHITE
-        )
-        self.WINDOW.blit(text, (dx, dy + 50))
-        # Actions on left side
-        for i, msg in enumerate(self.dealer.actions[-10:]):
-            text = self.FONT.render(msg, True, self.WHITE)
-            self.WINDOW.blit(text, (20, 50 + (i * 30)))
-
-    def _draw_players(self):  # TODO: multiplayer
-        # Player 1
-        text = self.BIG_FONT.render(
-            self.players[0].name,
-            True,
-            "yellow" if self.dealer.turn == 0 else self.WHITE,
-        )
-        self.WINDOW.blit(text, (self.p1x, self.p1y))
-        text = self.FONT.render(str(self.players[0].chips), True, self.WHITE)
-        self.WINDOW.blit(text, (self.p1x, self.p1y + 40))
-        self.WINDOW.blit(self.AVATAR1, (self.p1x, self.p1y + 70))
-        for i, card in enumerate(self.players[0].hand):
-            card.show(((self.p1x + 200) + (i * 100), self.p1y), show_back=False)
-        if self.players[0].chips_in_front != 0:
-            text = self.BIG_FONT.render(
-                str(int(self.players[0].chips_in_front)), True, self.WHITE
-            )
-            pygame.draw.circle(
-                self.WINDOW, "white", (self.p1x + 500, self.p1y + 230), 12
-            )  # Here <<<
-            self.WINDOW.blit(text, (self.p1x + 520, self.p1y + 215))
-
-        # Player 2
-        text = self.BIG_FONT.render(
-            self.players[1].name,
-            True,
-            self.GREEN if self.dealer.turn == 1 else self.WHITE,
-        )
-        self.WINDOW.blit(text, (self.p2x, self.p2y))
-        text = self.FONT.render(str(self.players[1].chips), True, self.WHITE)
-        self.WINDOW.blit(text, (self.p2x, self.p2y + 40))
-        self.WINDOW.blit(self.AVATAR2, (self.p2x, self.p2y + 70))
-        for i, card in enumerate(self.players[1].hand):
-            card.show(((self.p2x + 200) + (i * 100), self.p2y), show_back=True)
-        if self.players[1].chips_in_front != 0:
-            text = self.BIG_FONT.render(
-                str(int(self.players[1].chips_in_front)), True, self.WHITE
-            )
-            pygame.draw.circle(
-                self.WINDOW, "white", (self.p2x + 500, self.p2y - 50), 12
-            )  # Here <<<
-            self.WINDOW.blit(text, (self.p2x + 520, self.p2y - 65))
-        # Dealer button
-        self.WINDOW.blit(
-            self.DEALER_BUTTON,
-            (self.p1x + 120, self.p1y + 150 if self.button == 0 else self.p2y - 40),
-        )
-
-    def test_ai(self, ai_bet_net, ai_swap_net):
+    def play_ai(self, ai_bet_net, ai_swap_net):
         """
-        Test AI
+        Play badugi against AI.
+        :input:
+            - ai_bet_net: neat.nn.FeedForwardNetwork.create()
+            - ai_swap_net: neat.nn.FeedForwardNetwork.create()
         """
         run = True
         while run:
-            self.print_info()
             is_betting_stage = self.dealer.stage % 2 == 0
             # Main loop
             if self.hands_played >= self.MAX_HANDS:
@@ -190,28 +136,28 @@ class Badugi:
                 self.finish_hand(self)
             elif self.hand_active and is_betting_stage:  # TODO: Not only HU
                 if self.dealer.turn == 0:
-                    self.make_player_bet(self.players[0])
+                    self.make_human_bet(self.players[0])
                 elif self.dealer.turn == 1:
                     self.make_ai_bet_decision(self.players[1], ai_bet_net)
                 else:
                     print("ERROR" * 99)
             elif self.hand_active and not is_betting_stage:
                 if self.dealer.turn == 0:
-                    self.make_player_swap(self.players[0])
+                    self.make_human_swap(self.players[0])
                 elif self.dealer.turn == 1:
                     self.make_ai_swap_decision(self.players[1], ai_swap_net)
                 else:
                     print("ERROR" * 99)
             else:
                 self.deal_new_hand(self)
-            self.draw_game()
+            self.draw_game(self)
             pygame.display.update()
         return False
 
-    def train_swap(self, genome1, genome2, config):
+    def train_only_swap(self, genome1, genome2, config):
         """
-        Train the AI by passing two NEAT neural networks and the NEAt config object.
-        These AI's will play against eachother to determine their fitness.
+        AI needs to be tought how swap cards first when starting to evolve AI from zero.
+        Only for HU atm.
         """
         self.genome1 = genome1
         self.genome2 = genome2
@@ -222,12 +168,14 @@ class Badugi:
         while run:
             if self.hands_played >= self.MAX_HANDS:
                 run = False
+            elif self.hand_active and self.dealer.stage % 2 == 0:
+                self.dealer.stage += 1
             elif self.hand_active and self.dealer.stage < self.MAX_STAGES:
                 if self.dealer.turn == 0:
                     self.make_ai_swap_decision(self.players[0], net0)
                 elif self.dealer.turn == 1:
                     self.make_ai_swap_decision(self.players[1], net1)
-                else:
+                else:  # TODO poista
                     print("ERROR" * 99)
             elif self.dealer.stage >= self.MAX_STAGES and self.hand_active:
                 self.finish_hand(self)
@@ -236,10 +184,52 @@ class Badugi:
         self.calculate_fitness()
         return False
 
-    def train_betting(self, genome1, genome2, config, swap_net):
+    def train_swap(self, genome1, genome2, config, ai_bet_net):
         """
         Train the AI by passing two NEAT neural networks and the NEAt config object.
         These AI's will play against eachother to determine their fitness.
+        Takes evolved ai_bet_net: neat.nn.FeedForwardNetwork.create()
+        Only for HU atm.
+        """
+        self.genome1 = genome1
+        self.genome2 = genome2
+        net0 = neat.nn.FeedForwardNetwork.create(genome1, config)
+        net1 = neat.nn.FeedForwardNetwork.create(genome2, config)
+        self.is_not_training = False
+        run = True
+        while run:
+            is_swap_stage = self.dealer.stage % 2 == 1
+            if self.hands_played >= self.MAX_HANDS:
+                run = False
+            elif self.hand_active and self.dealer.stage >= self.MAX_STAGES:
+                self.finish_hand(self)
+            elif self.hand_active and is_swap_stage:
+                if self.dealer.turn == 0:
+                    self.make_ai_swap_decision(self.players[0], net0)
+                elif self.dealer.turn == 1:
+                    self.make_ai_swap_decision(self.players[1], net1)
+                else:  # TODO poista
+                    print("ERROR" * 99)
+            elif self.hand_active and not is_swap_stage:
+                if self.dealer.turn == 0:
+                    self.make_ai_bet_decision(self.players[0], net0)
+                elif self.dealer.turn == 1:
+                    self.make_ai_bet_decision(self.players[1], net1)
+                else:  # TODO poista
+                    print("ERROR" * 99)
+            else:
+                self.deal_new_hand(self)
+        self.calculate_fitness()
+        return False
+
+    def train_betting(self, genome1, genome2, config, ai_swap_net):
+        """
+        Train the AI by passing two NEAT neural networks and the NEAt config object.
+        These AI's will play against eachother to determine their fitness.
+        :input:
+            - 2 neat-python genomes
+            - neat-python config
+            - evolved ai_swap_net: neat.nn.FeedForwardNetwork.create()
         """
         self.genome1 = genome1
         self.genome2 = genome2
@@ -258,14 +248,14 @@ class Badugi:
                     self.make_ai_bet_decision(self.players[0], net0)
                 elif self.dealer.turn == 1:
                     self.make_ai_bet_decision(self.players[1], net1)
-                else:
+                else:  # TODO poista
                     print("ERROR" * 99)
             elif self.hand_active and not is_betting_stage:
                 if self.dealer.turn == 0:
-                    self.make_ai_swap_decision(self.players[0], swap_net)
+                    self.make_ai_swap_decision(self.players[0], ai_swap_net)
                 elif self.dealer.turn == 1:
-                    self.make_ai_swap_decision(self.players[1], swap_net)
-                else:
+                    self.make_ai_swap_decision(self.players[1], ai_swap_net)
+                else:  # TODO poista
                     print("ERROR" * 99)
             else:
                 self.deal_new_hand(self)
@@ -286,7 +276,7 @@ class Badugi:
             player.call(self.dealer)
         elif decision == 2:
             player.bet(self.dealer, self.players)
-        else:
+        else:  # TODO poista
             print("TURN ERROR")
         self.update_street(self)
 
@@ -301,14 +291,24 @@ class Badugi:
         decision = output.index(max(output))
         if self.is_not_training:
             print(f"player {player.name} swaps cards: {decision} ")
-        player.swap_number_of_cards(self.dealer, decision)
+        player.swap_for_ai(self.dealer, decision)
         self.update_street(self)
 
     def calculate_fitness(self):
+        """
+        Update neat-python genomes
+        """
         self.genome1.fitness += self.players[0].chips - self.STARTING_CHIPS
         self.genome2.fitness += self.players[1].chips - self.STARTING_CHIPS
 
-    def wait_for_player_bet(self, player, is_not_capped) -> int:
+    # def create_player_buttons(self, arg):
+    #     pass
+
+    def wait_for_human_bet(self, player, is_not_capped) -> int:
+        """
+        While loop waits until button is clicked. Returns decision: int.
+        Updates pygame buttons.
+        """
         waiting_decision = True
         is_call = player.chips_in_front < self.dealer.to_call
         button_texts = ["Fold", "Call" if is_call else "Check"]
@@ -342,7 +342,11 @@ class Badugi:
         pygame.display.update()
         return decision
 
-    def wait_for_player_swap(self, player):
+    def wait_for_human_swap(self, player):
+        """
+        While loop waits until cards are selected and confirmed.
+        Updates pygame buttons.
+        """
         waiting_decision = True
         dis_from_x = 700
         dis_from_y = 50
@@ -361,22 +365,22 @@ class Badugi:
                     waiting_decision = False
             self.clock.tick(30)
 
-    def make_player_bet(self, player):
+    def make_human_bet(self, player):
         is_not_capped = self.dealer.street_bets < self.dealer.cap
-        decision = self.wait_for_player_bet(player, is_not_capped)
-        if self.is_not_training:
+        decision = self.wait_for_human_bet(player, is_not_capped)
+        if self.is_not_training:  # TODO poista
             print(f"player {player.name} bet decision: {decision} ")
         if decision == 1:
             player.fold(self.dealer)
-        if decision == 3 and is_not_capped:
+        elif decision == 3 and is_not_capped:
             player.bet(self.dealer, self.players)
         else:
             player.call(self.dealer)
         self.update_street(self)
 
-    def make_player_swap(self, player):
-        self.wait_for_player_swap(player)
-        player.swap_selected_cards(self.dealer)
+    def make_human_swap(self, player):
+        self.wait_for_human_swap(player)
+        player.swap_for_human(self.dealer)
         self.update_street(self)
 
     def print_info(self):
@@ -400,8 +404,3 @@ class Badugi:
 
                 """
         )
-
-
-if __name__ == "__main__":
-    players = ["Player1", "AI"]
-    max_hands = 4

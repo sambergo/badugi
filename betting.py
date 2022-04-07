@@ -43,7 +43,7 @@ def test_ai(bet_config, swap_config):
     width, height = 1400, 800
     window = pygame.display.set_mode((width, height))
     badugi = Badugi(players, 1000, max_hands, window, width, height)
-    badugi.test_ai(ai_bet_net, ai_swap_net)
+    badugi.play_ai(ai_bet_net, ai_swap_net)
 
 
 # def run_betting_training(bet_config):

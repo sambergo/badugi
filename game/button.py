@@ -2,15 +2,14 @@ import pygame
 
 
 class Button:
-    """Create a button, then blit the surface in the while loop"""
+    """
+    Clickable pygame button
+    """
 
     def __init__(self, window, text, pos, font, bg=(100, 100, 100)):
         self.window = window
         self.x, self.y = pos
         self.font = font
-        self.on_click(text, bg)
-
-    def on_click(self, text, bg=(100, 100, 100)):
         self.text = self.font.render(text, True, pygame.Color("black"))
         self.size = (130, 50)
         self.surface = pygame.Surface(self.size)

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, List
 import pygame
 
 from .card import Card
+from .draw_pygame import draw_finish_game
 from .tools.get_winners import get_hand_rank, get_winners
 from .tools.sort_hand import sort_badugi_hand
 
@@ -65,7 +66,7 @@ def get_next_turn_index(players, start):
     return -1
 
 
-def create_deck(window):
+def create_deck(window) -> List[Card]:
     suits = ["C", "D", "H", "S"]
     deck = []
     for suit in suits:
@@ -76,18 +77,20 @@ def create_deck(window):
 
 
 def finish_hand(badugi: "Badugi"):
+    draw_finish_game(badugi)
     winners = get_winners([player for player in badugi.players if not player.folded])
     for player in badugi.players:
         if player.name in winners:
             if badugi.is_not_training:
                 print(f"WINNER: {player.name} amount_ {badugi.dealer.pot/len(winners)}")
-                # badugi.next_dealer_actions.append(
-                #     f"{player.name} won {badugi.dealer.pot/len(winners)} ({[str(c.number)+c.suit for c in player.hand]}) "
-                # )
                 badugi.dealer.actions.append(
                     f"{player.name} won {badugi.dealer.pot/len(winners)} ({', '.join([str(c.number)+c.suit for c in player.hand])}) "
                 )
             player.chips += badugi.dealer.pot / len(winners)
+        elif not player.folded:
+            badugi.dealer.actions.append(
+                f"{player.name} mucked {', '.join([str(c.number)+c.suit for c in player.hand])} "
+            )
         player.reset()
     badugi.button = (badugi.button + 1) % len(badugi.players)
     badugi.hands_played += 1
@@ -113,8 +116,8 @@ def deal_new_hand(badugi: "Badugi"):
             player_hand.append(badugi.dealer.deck.pop())
         player.hand = sort_badugi_hand(player_hand)
         player.hand_rank = get_hand_rank(player.hand)
-    pl = len(badugi.players)
     # Blinds
+    pl = len(badugi.players)
     sb_index = badugi.button if pl == 2 else (badugi.button + 1) % pl
     bb_index = (badugi.button + 1) % pl if pl == 2 else (badugi.button + 2) % pl
     badugi.players[sb_index].post_sb(badugi.dealer)
@@ -139,6 +142,6 @@ def update_street(badugi: "Badugi"):
     if no_turns_left and badugi.dealer.stage >= badugi.MAX_STAGES or no_showdown:
         badugi.finish_hand(badugi)
     elif no_turns_left and badugi.dealer.stage < badugi.MAX_STAGES or all_acted:
-        badugi.next_street(badugi)
+        next_street(badugi)
     else:
         badugi.dealer.next_turn(badugi.players, new_street=False)

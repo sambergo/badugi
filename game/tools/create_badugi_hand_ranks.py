@@ -1,5 +1,7 @@
 import json
 
+# To create hands.json file
+
 
 def create_badugi_hand_ranks():
     hands = []
