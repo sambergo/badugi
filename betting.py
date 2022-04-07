@@ -31,13 +31,13 @@ from game.game import Badugi
 
 
 def test_ai(bet_config, swap_config):
-    with open("best.pickle", "rb") as f:
+    with open("swap.pickle", "rb") as f:
         swap_winner = pickle.load(f)
     ai_swap_net = neat.nn.FeedForwardNetwork.create(swap_winner, swap_config)
-    with open("betting.pickle", "rb") as f:
+    with open("bet.pickle", "rb") as f:
         bet_winner = pickle.load(f)
     ai_bet_net = neat.nn.FeedForwardNetwork.create(bet_winner, bet_config)
-    max_hands = 10
+    max_hands = 100
     players = ["Player1", "AI"]
     pygame.display.set_caption("Badugi")
     width, height = 1400, 800
