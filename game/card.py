@@ -2,8 +2,10 @@ import os
 
 import pygame
 
+from .card_base import CardBase
 
-class Card:
+
+class Card(CardBase):
     """
     Clickable card with pygame blit function.
     """
@@ -11,9 +13,14 @@ class Card:
     card_back_src = pygame.image.load(os.path.join("PNG", "gray_back.png"))
     swap_img_src = pygame.image.load(os.path.join("PNG", "swap.png"))
 
-    def __init__(self, window, suit, number, img_src):
-        self.suit = suit
-        self.number = number
+    def __init__(
+        self,
+        window: pygame.surface.Surface,
+        suit: str,
+        number: int,
+        img_src: pygame.surface.Surface,
+    ):
+        super().__init__(suit, number)
         self.size = (100, 175)
         self.img = pygame.transform.scale(img_src, self.size)
         self.img_back = pygame.transform.scale(self.card_back_src, self.size)
