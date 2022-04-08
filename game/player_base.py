@@ -17,6 +17,7 @@ class PlayerBase:
         self.folded: bool = False
         self.acted: bool = False
         self.swapped: bool = False
+        self.prev_swap = 4
 
     def reset(self):
         self.hand = []
@@ -69,3 +70,5 @@ class PlayerBase:
         self.hand = sort_badugi_hand(self.hand)
         self.hand_rank = get_hand_rank(self.hand)
         self.swapped = True
+        dealer.prev_swap = n
+        self.prev_swap = n

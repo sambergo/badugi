@@ -44,10 +44,9 @@ def finish_hand(badugi: "Badugi"):
     winners = get_winners([player for player in badugi.players if not player.folded])
     for player in badugi.players:
         if player.name in winners:
-            if badugi.is_not_training:
-                amount = {badugi.dealer.pot / len(winners)}
-                hand = {", ".join([str(c.number) + c.suit for c in player.hand])}
-                badugi.dealer.actions.append(f"{player.name} won {amount} ({hand})")
+            amount = {badugi.dealer.pot / len(winners)}
+            hand = {", ".join([str(c.number) + c.suit for c in player.hand])}
+            badugi.dealer.actions.append(f"{player.name} won {amount} ({hand})")
             player.chips += badugi.dealer.pot / len(winners)
         elif not player.folded:
             hand = {", ".join([str(c.number) + c.suit for c in player.hand])}

@@ -16,10 +16,9 @@ def draw_game(badugi: "Badugi"):
 
 
 def draw_finish_game(badugi: "Badugi"):
-    if badugi.is_not_training:
-        draw_players(badugi, False)
-        pygame.display.update()
-        pygame.time.wait(2000)
+    draw_players(badugi, False)
+    pygame.display.update()
+    pygame.time.wait(2000)
 
 
 def draw_dealer(badugi: "Badugi"):

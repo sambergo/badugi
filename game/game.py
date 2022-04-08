@@ -58,7 +58,6 @@ class Badugi(BadugiBase):
         self.dealer = Dealer(
             self.players, self.button, self.BB, create_deck(self.WINDOW)
         )
-        self.is_not_training = True
         self.clock = pygame.time.Clock()
         self.p1x = self.WIDTH // 4
         self.p1y = 50

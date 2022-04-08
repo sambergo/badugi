@@ -30,6 +30,7 @@ class DealerBase:
             button if self.players_length == 2 else (button + 3) % self.players_length
         )
         self.to_call = bb
+        self.prev_swap = 0
 
     def shuffle_deck(self):
         shuffle(self.deck)
