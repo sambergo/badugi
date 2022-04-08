@@ -1,1 +1,1 @@
-from .game import Badugi
+from .game_base import BadugiBase

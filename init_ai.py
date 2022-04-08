@@ -8,6 +8,7 @@ from game.game_base import BadugiBase
 
 def eval_genomes(genomes, config):
     for i, (genome1_id, genome1) in enumerate(genomes):
+        print(i)
         if i == len(genomes) - 1:
             break
         genome1.fitness = 0
