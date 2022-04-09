@@ -43,6 +43,7 @@ class BadugiBase:
         self.finish_hand = finish_hand_base
         self.update_street = update_street
         self.deal_new_hand = deal_new_hand
+        self.training_mode = None
 
     def train_only_swap(self, genome1, genome2, config):
         """
@@ -103,7 +104,7 @@ class BadugiBase:
         self.calculate_fitness()
         return False
 
-    def train_betting(self, genome1, genome2, config, ai_swap_net):
+    def train_bet(self, genome1, genome2, config, ai_swap_net):
         """
         These AI's will play against eachother to determine their fitness.
         :input:
@@ -222,14 +223,16 @@ class BadugiBase:
         player_index = self.dealer.turn
         stage = self.dealer.stage
         opponent_prev_swap = self.dealer.prev_swap
-        # Punish for holding useless cards in early streets
-        for i in range(0, 3):
-            if (
-                stage <= 3
-                and hand_ranks[i] <= hand_ranks[i + 1]
-                and decision <= hand_ranks[i]
-            ):
-                self.punish_ai(player_index, 1 * self.BB)
+        # Punish for holding useless cards. Cant learn snowing when swap and bet AI:s are separated.
+        # If swapping 0-2 cards when shoud do more
+        if decision <= 2 and hand_ranks[decision] == hand_ranks[decision + 1]:
+            self.punish_ai(player_index, 5 * self.BB)
+        # For throwing away good hand
+        if hand_ranks[0] >= 344 and stage <= 3 and decision >= 2:
+            self.punish_ai(player_index, 5 * self.BB)
+        # Punish for holdin only 9 or higher
+        if decision == 3 and self.players[player_index].hand[0].number >= 9:
+            self.punish_ai(player_index, 2 * self.BB)
 
     def trim_bet_fitness(
         self,
@@ -254,11 +257,11 @@ class BadugiBase:
             and to_call == 0
             and decision == 2
         ):
-            self.punish_ai(player_index, 5 * self.BB)
+            self.punish_ai(player_index, 50 * self.BB)
         if (
             not in_position
             and opponent_prev_swap < player_prev_swap - 1
             and to_call == 0
             and decision == 2
         ):
-            self.punish_ai(player_index, 2 * self.BB)
+            self.punish_ai(player_index, 50 * self.BB)
