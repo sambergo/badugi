@@ -141,13 +141,9 @@ class BadugiBase:
     def make_ai_bet_decision(self, player, net):
         is_not_capped = self.dealer.cap > self.dealer.street_bets
         hand_rank = get_hand_rank(player.hand)
-        position = (
-            1 if self.dealer.turn == self.button else -1
-        )  # TODO : Change if multiplayer
         output = net.activate(
             (
                 hand_rank,
-                position,
                 self.dealer.stage,
                 self.dealer.pot,
                 self.dealer.to_call,
@@ -155,13 +151,6 @@ class BadugiBase:
             )
         )
         decision = output.index(max(output))
-        if self.training_mode == "bet":
-            self.trim_bet_fitness(
-                decision,
-                position == 1,
-                player.chips_in_front,
-                player.prev_swap,
-            )
         if decision == 0:
             player.fold()
         elif decision == 2 and is_not_capped:
@@ -171,34 +160,9 @@ class BadugiBase:
         self.update_street(self)
 
     def make_ai_swap_decision(self, player, net):
-        # old_rank = get_hand_rank(player.hand)
-        # rank_with_3 = get_hand_rank(player.hand[:3])
-        # rank_with_2 = get_hand_rank(player.hand[:2])
-        # rank_with_1 = get_hand_rank(player.hand[:1])
         hand_ranks = [get_hand_rank(player.hand[:i]) for i in range(4, 0, -1)]
-        position = (
-            1 if self.dealer.turn == self.button else -1
-        )  # TODO : Change if multiplayer
-        output = net.activate(
-            (
-                self.dealer.stage,
-                position,
-                self.dealer.prev_swap,
-                *hand_ranks
-                # old_rank,
-                # rank_with_3,
-                # rank_with_2,
-                # rank_with_1,
-            )
-        )
+        output = net.activate((self.dealer.stage, *hand_ranks))
         decision = output.index(max(output))
-        if self.training_mode == "swap":
-            self.trim_swap_fitness(
-                decision,
-                hand_ranks,
-                position == 1,
-                player.prev_swap,
-            )
         player.swap_for_ai(self.dealer, decision)
         self.update_street(self)
 
@@ -208,60 +172,3 @@ class BadugiBase:
         """
         self.genomes[0].fitness += self.players[0].chips - self.STARTING_CHIPS
         self.genomes[1].fitness += self.players[1].chips - self.STARTING_CHIPS
-
-    def punish_ai(self, i, x):
-        self.genomes[i].fitness -= x
-
-    def trim_swap_fitness(
-        self,
-        decision: int,
-        hand_ranks: list[int],
-        in_position: bool,
-        player_prev_swap: int,
-    ):
-        # Decision: How many cards to swap
-        player_index = self.dealer.turn
-        stage = self.dealer.stage
-        opponent_prev_swap = self.dealer.prev_swap
-        # Punish for holding useless cards. Cant learn snowing when swap and bet AI:s are separated.
-        # If swapping 0-2 cards when shoud do more
-        if decision <= 2 and hand_ranks[decision] == hand_ranks[decision + 1]:
-            self.punish_ai(player_index, 5 * self.BB)
-        # For throwing away good hand
-        if hand_ranks[0] >= 344 and stage <= 3 and decision >= 2:
-            self.punish_ai(player_index, 5 * self.BB)
-        # Punish for holdin only 9 or higher
-        if decision == 3 and self.players[player_index].hand[0].number >= 9:
-            self.punish_ai(player_index, 2 * self.BB)
-
-    def trim_bet_fitness(
-        self,
-        decision: int,
-        in_position: bool,
-        chips_in_front: float,
-        player_prev_swap: int,
-    ):
-        player_index = self.dealer.turn
-        to_call = self.dealer.to_call
-        stage = self.dealer.stage
-        opponent_prev_swap = self.dealer.prev_swap
-        # Decision 0 = fold, 1 = check/call, 2 = bet/raise
-        # Punish for giving up
-        if decision == 0 and to_call == chips_in_front:
-            self.punish_ai(player_index, 100 * self.BB)
-        # Punish for stupid leading bet out of position
-        if (
-            not in_position
-            and opponent_prev_swap == 0
-            and player_prev_swap != 0
-            and to_call == 0
-            and decision == 2
-        ):
-            self.punish_ai(player_index, 50 * self.BB)
-        if (
-            not in_position
-            and opponent_prev_swap < player_prev_swap - 1
-            and to_call == 0
-            and decision == 2
-        ):
-            self.punish_ai(player_index, 50 * self.BB)

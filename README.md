@@ -18,9 +18,9 @@ rm swap.pickle bet.pickle
 ./train_ai.py
 ```
 
-"Swapping cards" and "betting" -skills evolve separately. Swapping cards without betting rounds first by running `init_ai`. Then AI can evolve further by running `train_bet` and `train_swap`. Choose these by commenting others out in `train_ai.py`
+"Swapping cards" and "betting" -skills evolve separately. Swapping cards without betting rounds first by running `init_ai`. Then AI can evolve further by running `train_bet` and `train_swap`. Choose these by commenting others out in `train_ai.py`. Re-create AI in this repo by running `init_ai`, `train_bet` and `train_swap` in that order.
 
-[NEAT-Python](https://neat-python.readthedocs.io/en/latest/) creates population of 50 units who play against each other for 100 hands. The best ones are used to breed the next generation and this goes on for 40 generations.
+[NEAT-Python](https://neat-python.readthedocs.io/en/latest/) creates population of 50 units who play against each other for 100 hands. The best ones are used to breed the next generation of 50 units and this goes on for 40 generations.
 
 Variables to vary in `train_ai.py`:
 
