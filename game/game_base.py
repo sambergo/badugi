@@ -18,7 +18,7 @@ class BadugiBase:
     """
     Train AI:
         - train_swap
-        - train_betting
+        - train_bet
     *_base.py files are for AI evolving and do not load pygame, images or other heavy stuff.
     """
 
@@ -106,7 +106,7 @@ class BadugiBase:
         self.calculate_fitness()
         return False
 
-    def train_betting(self, genome1, genome2, config, ai_swap_net):
+    def train_bet(self, genome1, genome2, config, ai_swap_net):
         """
         These AI's will play against eachother to determine their fitness.
         :input:
