@@ -18,7 +18,7 @@ class BadugiBase:
     """
     Train AI:
         - train_swap
-        - train_betting
+        - train_bet
     *_base.py files are for AI evolving and do not load pygame, images or other heavy stuff.
     """
 
