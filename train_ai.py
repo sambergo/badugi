@@ -97,11 +97,11 @@ def train_swap(swap_config):
 
 
 if __name__ == "__main__":
-    # init_config = get_config("config-swap.txt")
-    # init_ai(init_config)
+    init_config = get_config("config-swap.txt")
+    init_ai(init_config)
     #
-    bet_config = get_config("config-bet.txt")
-    train_bet(bet_config)
+    # bet_config = get_config("config-bet.txt")
+    # train_bet(bet_config)
     #
     # swap_config = get_config("config-swap.txt")
     # train_swap(swap_config)
