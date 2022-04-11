@@ -6,7 +6,7 @@ import neat
 from game.game_base import BadugiBase
 
 
-def eval_genomes(genomes, config):
+def eval_genomes_init(genomes, config):
     for i, (genome1_id, genome1) in enumerate(genomes):
         if i == len(genomes) - 1:
             break
@@ -23,7 +23,7 @@ def init_ai(swap_config):
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
     max_generations = 40
-    swap_winner = p.run(eval_genomes, max_generations)
+    swap_winner = p.run(eval_genomes_init, max_generations)
     print("\nBest genome:\n{!s}".format(swap_winner))
     with open("swap.pickle", "wb") as f:
         pickle.dump(swap_winner, f)
