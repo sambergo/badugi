@@ -26,12 +26,8 @@ def get_winners(players):
 def get_hand_rank(hand) -> int:
     """
     :input example:
-    hand = [
-        {"suit": "d", "number": 2},
-        {"suit": "h", "number": 7},
-        {"suit": "c", "number": 12},
-        {"suit": "c", "number": 13},
-    ]
+    hand = [Card]
+    Card = {suit: "h", number: 3}
     :return: Rank integer, higher the better
     """
     badugi_hand = []
