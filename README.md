@@ -36,6 +36,11 @@ pop_size              = 50
 
 # If modifying fitness functions (better-fitness branch)
 num_hidden              = 0
-num_inputs              = 6
+num_inputs              = 5
 num_outputs             = 3
 ```
+
+## Notes to self
+
+- For better performance: `sort_badugi_hand` and `get_hand_rank` most time consuming functions. `Card` and `Dealer` as classes make it slow? Add multiprocessing?
+- For better fitness: check `better-fitness` branch
