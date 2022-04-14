@@ -13,12 +13,14 @@ pip install -r requirements.txt
 
 ## To evolve AI from zero
 
+"Swapping cards" and "betting" -skills evolve separately. Initialize swapping cards capability without betting rounds first by running `./train_ai.py init`. Then AI can evolve further by running `bet` and `swap`. Re-create AI in this repo by running:
+
 ```
 rm swap.pickle bet.pickle
-./train_ai.py init / bet / swap
+./train_ai.py init bet swap
 ```
 
-"Swapping cards" and "betting" -skills evolve separately. Initialize swapping cards capability without betting rounds first by running `./train_ai.py init`. Then AI can evolve further by running `bet` and `swap`. Re-create AI in this repo by running `./train_ai.py init bet swap` (Will take a while).
+(This will take a while)
 
 [NEAT-Python](https://neat-python.readthedocs.io/en/latest/) creates population of 50 units who play against each other for 100 hands. The best ones breed the next generation of 50 units and this goes on for 40 generations.
 
