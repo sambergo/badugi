@@ -97,11 +97,16 @@ def train_swap(swap_config):
 
 
 if __name__ == "__main__":
-    # init_config = get_config("config-swap.txt")
-    # init_ai(init_config)
-    #
-    bet_config = get_config("config-bet.txt")
-    train_bet(bet_config)
-    #
-    swap_config = get_config("config-swap.txt")
-    train_swap(swap_config)
+    import sys
+
+    if "init" in sys.argv:
+        init_config = get_config("config-swap.txt")
+        init_ai(init_config)
+    if "bet" in sys.argv:
+        bet_config = get_config("config-bet.txt")
+        train_bet(bet_config)
+    if "swap" in sys.argv:
+        swap_config = get_config("config-swap.txt")
+        train_swap(swap_config)
+    if not any([s in sys.argv for s in ["init", "bet", "swap"]]):
+        print("try: ./train_ai.py init / bet / swap")
